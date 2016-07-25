@@ -8,6 +8,7 @@ import math
 from threading import Thread, Lock
 from queue import Queue
 
+import rethinkdb as r
 from pgoapi import PGoApi
 from pgoapi.utilities import f2i
 
@@ -113,6 +114,9 @@ def create_search_threads(num) :
         search_threads.append(t)
 
 def search_thread(args):
+    # Setup DB connection
+    r.connect(db='pogomap').repl()
+
     queue = args
     while True:
         i, total_steps, step_location, step, lock = queue.get()
@@ -137,6 +141,9 @@ def search_thread(args):
                 log.info('Map Download failed. Trying again.')
 
         time.sleep(config['REQ_SLEEP'])
+
+    # Close DB connection
+    r.close()
 
 def process_search_threads(search_threads, curr_steps, total_steps):
     for thread in search_threads:

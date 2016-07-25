@@ -75,8 +75,8 @@ function notifyAboutPokemon(id) {
     ).trigger('change')
 }
 
-function removePokemonMarker(encounter_id) {
-    map_data.pokemons[encounter_id].marker.setMap(null);
+function removePokemonMarker(id) {
+    map_data.pokemons[id].marker.setMap(null);
 }
 
 function initMap() {
@@ -216,7 +216,7 @@ function initSidebar() {
 
 function pad(number) { return number <= 99 ? ("0" + number).slice(-2) : number; }
 
-function pokemonLabel(name, disappear_time, id, latitude, longitude, encounter_id) {
+function pokemonLabel(name, disappear_time, id, latitude, longitude, id) {
     disappear_date = new Date(disappear_time)
 
     var contentstring = `
@@ -237,7 +237,7 @@ function pokemonLabel(name, disappear_time, id, latitude, longitude, encounter_i
         <div>
             <a href='javascript:excludePokemon(${id})'>Exclude</a>&nbsp;&nbsp;
             <a href='javascript:notifyAboutPokemon(${id})'>Notify</a>&nbsp;&nbsp;
-            <a href='javascript:removePokemonMarker("${encounter_id}")'>Remove</a>&nbsp;&nbsp;
+            <a href='javascript:removePokemonMarker("${id}")'>Remove</a>&nbsp;&nbsp;
             <a href='https://www.google.com/maps/dir/Current+Location/${latitude},${longitude}'
                     target='_blank' title='View in Maps'>Get directions</a>
         </div>`;
@@ -390,7 +390,7 @@ function setupPokemonMarker(item) {
     });
 
     marker.infoWindow = new google.maps.InfoWindow({
-        content: pokemonLabel(item.pokemon_name, item.disappear_time, item.pokemon_id, item.latitude, item.longitude, item.encounter_id),
+        content: pokemonLabel(item.pokemon_name, item.disappear_time, item.pokemon_id, item.latitude, item.longitude, item.id),
         disableAutoPan: true
     });
 
@@ -571,10 +571,10 @@ function loadRawData() {
     var bounds = map.getBounds();
     var swPoint = bounds.getSouthWest();
     var nePoint = bounds.getNorthEast();
-    var swLat = swPoint.lat();
-    var swLng = swPoint.lng();
-    var neLat = nePoint.lat();
-    var neLng = nePoint.lng();
+    var swLat = swPoint.lat() - 1.0;
+    var swLng = swPoint.lng() - 1.0;
+    var neLat = nePoint.lat() + 1.0;
+    var neLng = nePoint.lng() + 1.0;
 
     return $.ajax({
         url: "raw_data",
@@ -607,12 +607,12 @@ function processPokemons(i, item) {
     if (!(localStorage.showPokemon === 'true')) {
         return false; // in case the checkbox was unchecked in the meantime.
     }
-    if (!(item.encounter_id in map_data.pokemons) &&
+    if (!(item.id in map_data.pokemons) &&
         excludedPokemon.indexOf(item.pokemon_id) < 0) {
         // add marker to map and item to dict
         if (item.marker) item.marker.setMap(null);
         item.marker = setupPokemonMarker(item);
-        map_data.pokemons[item.encounter_id] = item;
+        map_data.pokemons[item.id] = item;
     }
 }
 
@@ -620,18 +620,18 @@ function processPokestops(i, item) {
     if (!(localStorage.showPokestops === 'true')) {
         return false;
     }
-    if (map_data.pokestops[item.pokestop_id] == null) { // add marker to map and item to dict
+    if (map_data.pokestops[item.id] == null) { // add marker to map and item to dict
         // add marker to map and item to dict
         if (item.marker) item.marker.setMap(null);
         item.marker = setupPokestopMarker(item);
-        map_data.pokestops[item.pokestop_id] = item;
+        map_data.pokestops[item.id] = item;
     }
     else {
-        item2 = map_data.pokestops[item.pokestop_id];
+        item2 = map_data.pokestops[item.id];
         if (!!item.lure_expiration != !!item2.lure_expiration || item.active_pokemon_id != item2.active_pokemon_id) {
-            item.marker.setMap(null);
+            if (item.marker) item.marker.setMap(null);
             item.marker = setupPokestopMarker(item);
-            map_data.pokestops[item.pokestop_id] = item;
+            map_data.pokestops[item.id] = item;
         }
     }
 }
@@ -674,13 +674,13 @@ function processGyms(i, item) {
         return false; // in case the checkbox was unchecked in the meantime.
     }
 
-    if (item.gym_id in map_data.gyms) {
+    if (item.id in map_data.gyms) {
         // if team has changed, create new marker (new icon)
-        if (map_data.gyms[item.gym_id].team_id != item.team_id) {
-            map_data.gyms[item.gym_id].marker.setMap(null);
-            map_data.gyms[item.gym_id].marker = setupGymMarker(item);
+        if (map_data.gyms[item.id].team_id != item.team_id) {
+            map_data.gyms[item.id].marker.setMap(null);
+            map_data.gyms[item.id].marker = setupGymMarker(item);
         } else { // if it hasn't changed generate new label only (in case prestige has changed)
-            map_data.gyms[item.gym_id].marker.infoWindow = new google.maps.InfoWindow({
+            map_data.gyms[item.id].marker.infoWindow = new google.maps.InfoWindow({
                 content: gymLabel(gym_types[item.team_id], item.team_id, item.gym_points, item.latitude, item.longitude),
                 disableAutoPan: true
             });
@@ -689,7 +689,7 @@ function processGyms(i, item) {
     else { // add marker to map and item to dict
         if (item.marker) item.marker.setMap(null);
         item.marker = setupGymMarker(item);
-        map_data.gyms[item.gym_id] = item;
+        map_data.gyms[item.id] = item;
     }
 
 }

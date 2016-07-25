@@ -1,7 +1,7 @@
 Flask
 Jinja2
 argparse
-peewee
+rethinkdb
 geopy
 protobuf>=3.0.0a3
 requests

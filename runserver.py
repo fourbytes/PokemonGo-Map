@@ -9,12 +9,12 @@ import time
 from threading import Thread
 from flask_cors import CORS, cross_origin
 
-from pogom import config
-from pogom.app import Pogom
+from pogomap import config
+from pogomap.app import Pogom
 
-from pogom.utils import get_args, insert_mock_data, load_credentials, get_pos_by_name
-from pogom.search import search_loop, create_search_threads
-from pogom.models import init_database, create_tables, Pokemon, Pokestop, Gym
+from pogomap.utils import get_args, insert_mock_data, load_credentials, get_pos_by_name
+from pogomap.search import search_loop, create_search_threads
+from pogomap.models import init_database, create_tables
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def start_locator_thread(args):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(module)11s] [%(levelname)7s] %(message)s')
 
-    logging.getLogger("peewee").setLevel(logging.INFO)
+    logging.getLogger("rethinkdb").setLevel(logging.INFO)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("pogom.pgoapi.pgoapi").setLevel(logging.WARNING)
     logging.getLogger("pogom.pgoapi.rpc_api").setLevel(logging.INFO)
@@ -47,8 +47,8 @@ if __name__ == '__main__':
         logging.getLogger("pgoapi").setLevel(logging.DEBUG)
         logging.getLogger("rpc_api").setLevel(logging.DEBUG)
 
-    db = init_database()
-    create_tables(db)
+    init_database()
+    create_tables()
 
     position = get_pos_by_name(args.location)
     if not any(position):

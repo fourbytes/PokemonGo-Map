@@ -3,16 +3,18 @@
 
 import calendar
 import logging
+import rethinkdb as r
 
 from flask import Flask, jsonify, render_template, request
+from flask import _app_ctx_stack as stack
 from flask.json import JSONEncoder
 from flask_compress import Compress
 from datetime import datetime
 from s2sphere import *
-from pogom.utils import get_args
 
 from . import config
-from .models import Pokemon, Gym, Pokestop, ScannedLocation
+from .utils import get_args
+from .models import get_recently_scanned, get_active_pokemon, get_active_pokemon_by_id, get_gyms, get_pokestops, init_database
 
 log = logging.getLogger(__name__)
 compress = Compress()
@@ -21,12 +23,27 @@ class Pogom(Flask):
     def __init__(self, import_name, **kwargs):
         super(Pogom, self).__init__(import_name, **kwargs)
         compress.init_app(self)
+
         self.json_encoder = CustomJSONEncoder
         self.route("/", methods=['GET'])(self.fullmap)
         self.route("/raw_data", methods=['GET'])(self.raw_data)
         self.route("/loc", methods=['GET'])(self.loc)
         self.route("/next_loc", methods=['POST'])(self.next_loc)
         self.route("/mobile", methods=['GET'])(self.list_pokemon)
+
+        @self.before_request
+        def before():
+            ctx = stack.top
+            if ctx is not None:
+                if not hasattr(ctx, 'rethinkdb'):
+                    ctx.rethinkdb = r.connect(db='pogomap')
+                    ctx.rethinkdb.repl()
+
+        @self.teardown_appcontext
+        def teardown(exception):
+            ctx = stack.top
+            if hasattr(ctx, 'rethinkdb'):
+                ctx.rethinkdb.close()
 
     def fullmap(self):
         args = get_args()
@@ -44,26 +61,28 @@ class Pogom(Flask):
 
     def raw_data(self):
         d = {}
-        swLat = request.args.get('swLat')
-        swLng = request.args.get('swLng')
-        neLat = request.args.get('neLat')
-        neLng = request.args.get('neLng')
+        try:
+            swLat = float(request.args.get('swLat')) - 20.0
+            swLng = float(request.args.get('swLng')) - 20.0
+            neLat = float(request.args.get('neLat')) + 20.0
+            neLng = float(request.args.get('neLng')) + 20.0
+        except ValueError:
+            swLat, swLng, neLat, neLng = -180, -180, 180, 180
 
         if request.args.get('pokemon', 'true') == 'true':
             if request.args.get('ids'):
-                ids = [int(x) for x in request.args.get('ids').split(',')]
-                d['pokemons'] = Pokemon.get_active_by_id(ids, swLat, swLng, neLat, neLng)
+                d['pokemons'] = [get_active_pokemon_by_id(int(sid)) for sid in request.args.get('ids').split(',')]
             else:
-                d['pokemons'] = Pokemon.get_active(swLat, swLng, neLat, neLng)
+                d['pokemons'] = get_active_pokemon(swLat, swLng, neLat, neLng)
 
         if request.args.get('pokestops', 'false') == 'true':
-            d['pokestops'] = Pokestop.get_stops(swLat, swLng, neLat, neLng)
+            d['pokestops'] = get_pokestops(swLat, swLng, neLat, neLng)
 
         if request.args.get('gyms', 'true') == 'true':
-            d['gyms'] = Gym.get_gyms(swLat, swLng, neLat, neLng)
+            d['gyms'] = get_gyms(swLat, swLng, neLat, neLng)
 
         if request.args.get('scanned', 'true') == 'true':
-            d['scanned'] = ScannedLocation.get_recent(swLat, swLng, neLat, neLng)
+            d['scanned'] = get_recently_scanned(swLat, swLng, neLat, neLng)
 
         return jsonify(d)
 
