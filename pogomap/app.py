@@ -71,7 +71,7 @@ class Pogom(Flask):
 
         if request.args.get('pokemon', 'true') == 'true':
             if request.args.get('ids'):
-                d['pokemons'] = [get_active_pokemon_by_id(int(sid)) for sid in request.args.get('ids').split(',')]
+                d['pokemons'] = get_active_pokemon_by_id([int(sid) for sid in request.args.get('ids').split(',')])
             else:
                 d['pokemons'] = get_active_pokemon(swLat, swLng, neLat, neLng)
 
@@ -97,10 +97,12 @@ class Pogom(Flask):
         args = get_args()
         if args.fixed_location:
             return 'Location searching is turned off', 403
-       #part of query string
+
+        #part of query string
         if request.args:
             lat = request.args.get('lat', type=float)
             lon = request.args.get('lon', type=float)
+
         #from post requests
         if request.form:
             lat = request.form.get('lat', type=float)
@@ -109,13 +111,14 @@ class Pogom(Flask):
         if not (lat and lon):
             log.warning('Invalid next location: %s,%s' % (lat, lon))
             return 'bad parameters', 400
-        else:
+        elif config.get('NEXT_LOCATION', {}).get('lat') != lat and config.get('NEXT_LOCATION', {}).get('lon') != lon:
             config['NEXT_LOCATION'] = {'lat': lat, 'lon': lon}
             log.info('Changing next location: %s,%s' % (lat, lon))
-            return 'ok'
+            return 'ok', 200
+        else:
+            return 'ok', 200
 
     def list_pokemon(self):
-        # todo: check if client is android/iOS/Desktop for geolink, currently only supports android
         pokemon_list = []
 
         # Allow client to specify location

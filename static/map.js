@@ -341,7 +341,7 @@ function initSidebar() {
 
 function pad(number) { return number <= 99 ? ("0" + number).slice(-2) : number; }
 
-function pokemonLabel(name, disappear_time, id, latitude, longitude, id) {
+function pokemonLabel(name, disappear_time, pokemon_id, latitude, longitude, id) {
     disappear_date = new Date(disappear_time)
 
     var contentstring = `
@@ -349,7 +349,7 @@ function pokemonLabel(name, disappear_time, id, latitude, longitude, id) {
             <b>${name}</b>
             <span> - </span>
             <small>
-                <a href='http://www.pokemon.com/us/pokedex/${id}' target='_blank' title='View in Pokedex'>#${id}</a>
+                <a href='http://www.pokemon.com/us/pokedex/${pokemon_id}' target='_blank' title='View in Pokedex'>#${pokemon_id}</a>
             </small>
         </div>
         <div>

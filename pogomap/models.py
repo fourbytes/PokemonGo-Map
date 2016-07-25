@@ -48,6 +48,12 @@ def utc_localize(dt):
 
     return utc.localize(dt)
 
+def process_pokemon_dict(p):
+    # We don't need this stored in the db so we'll just get it as we retrieve it.
+    p['pokemon_name'] = get_pokemon_name(p['pokemon_id']).capitalize()
+
+    return p
+
 def in_bounds(swLat, swLng, neLat, neLng):
     return lambda row: ((row['latitude'] >= swLat) &
                         (row['longitude'] >= swLng) &
@@ -55,12 +61,14 @@ def in_bounds(swLat, swLng, neLat, neLng):
                         (row['longitude'] <= neLng))
 
 def get_active_pokemon(swLat, swLng, neLat, neLng):
-    return r.table('pokemon') \
-            .filter(in_bounds(swLat, swLng, neLat, neLng)) \
-            .filter(r.row['disappear_time'] > utc_localize(datetime.utcnow())).run()
+    return map(process_pokemon_dict, r.table('pokemon') \
+                                      .filter(in_bounds(swLat, swLng, neLat, neLng)) \
+                                      .filter(r.row['disappear_time'] > utc_localize(datetime.utcnow())).run())
 
 def get_active_pokemon_by_id(pid):
-    return r.table('pokemon').filter(r.row['disappear_time'] > utc_localize(datetime.utcnow())).get(pid).run()
+    return map(process_pokemon_dict, r.table('pokemon') \
+                                      .filter(r.row['disappear_time'] > utc_localize(datetime.utcnow()) &
+                                              r.row['pokemon_id'] == pid).run())
 
 def get_pokestops(swLat, swLng, neLat, neLng):
     return r.table('pokestops').filter(in_bounds(swLat, swLng, neLat, neLng)).run()

@@ -32,8 +32,8 @@ if __name__ == '__main__':
 
     logging.getLogger("rethinkdb").setLevel(logging.INFO)
     logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("pogom.pgoapi.pgoapi").setLevel(logging.WARNING)
-    logging.getLogger("pogom.pgoapi.rpc_api").setLevel(logging.INFO)
+    logging.getLogger("pgoapi.pgoapi").setLevel(logging.WARNING)
+    logging.getLogger("pgoapi.rpc_api").setLevel(logging.INFO)
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
     args = get_args()
