@@ -1,6 +1,6 @@
 Flask
 Jinja2
-argparse
+configargparse
 rethinkdb
 geopy
 protobuf>=3.0.0a3
