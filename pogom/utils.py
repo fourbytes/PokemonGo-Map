@@ -9,18 +9,17 @@ import uuid
 import os
 import json
 from datetime import datetime, timedelta
-import ConfigParser
+import configparser
+from geopy.geocoders import GoogleV3
+from s2sphere import CellId, LatLng
+from google.protobuf.internal import encoder
 
 from . import config
-from exceptions import APIKeyException
+from .exceptions import APIKeyException
 
-
-def parse_unicode(bytestring):
-    decoded_string = bytestring.decode(sys.getfilesystemencoding())
-    return decoded_string
 
 def parse_config(args):
-    Config = ConfigParser.ConfigParser()
+    Config = configparser.ConfigParser()
     Config.read(os.path.join(os.path.dirname(__file__), '../config/config.ini'))
     args.auth_service = Config.get('Authentication', 'Service')
     args.username = Config.get('Authentication', 'Username')
@@ -29,9 +28,9 @@ def parse_config(args):
     args.step_limit = int(Config.get('Search_Settings', 'Steps'))
     args.scan_delay = int(Config.get('Search_Settings', 'Scan_delay'))
     if Config.get('Misc', 'Google_Maps_API_Key') :
-        args.gmaps_key = Config.get('Misc', 'Google_Maps_API_Key') 
-    args.host = Config.get('Misc', 'Host') 
-    args.port = Config.get('Misc', 'Port') 
+        args.gmaps_key = Config.get('Misc', 'Google_Maps_API_Key')
+    args.host = Config.get('Misc', 'Host')
+    args.port = Config.get('Misc', 'Port')
     return args
 
 def get_args():
@@ -41,7 +40,7 @@ def get_args():
     parser.add_argument('-a', '--auth-service', type=str.lower, help='Auth Service', default='ptc')
     parser.add_argument('-u', '--username', help='Username', required=False)
     parser.add_argument('-p', '--password', help='Password', required=False)
-    parser.add_argument('-l', '--location', type=parse_unicode, help='Location, can be an address or coordinates', required=False)
+    parser.add_argument('-l', '--location', type=str, help='Location, can be an address or coordinates', required=False)
     parser.add_argument('-st', '--step-limit', help='Steps', required=False, type=int)
     parser.add_argument('-sd', '--scan-delay', help='Time delay before beginning new scan', required=False, type=int, default=1)
     parser.add_argument('-dc','--display-in-console',help='Display Found Pokemon in Console',action='store_true',default=False)
@@ -61,11 +60,11 @@ def get_args():
     args = parser.parse_args()
 
     if (args.settings):
-        args = parse_config(args) 
+        args = parse_config(args)
     else:
         if (args.username is None or args.location is None or args.step_limit is None):
             parser.print_usage()
-            print sys.argv[0] + ': error: arguments -u/--username, -l/--location, -st/--step-limit are required'
+            print(sys.argv[0] + ': error: arguments -u/--username, -l/--location, -st/--step-limit are required')
             sys.exit(1);
 
         if args.password is None:
@@ -88,7 +87,7 @@ def insert_mock_data():
 
     detect_time = datetime.now()
 
-    for i in xrange(num_pokemon):
+    for i in range(num_pokemon):
         Pokemon.create(encounter_id=uuid.uuid4(),
                        spawnpoint_id='sp{}'.format(i),
                        pokemon_id=(i+1) % 150,
@@ -143,3 +142,35 @@ def load_credentials(filepath):
             " Please take a look at the wiki for instructions on how to generate this key,"
             " then add that key to the file!")
     return creds
+
+
+def get_pos_by_name(location_name):
+    prog = re.compile("^(\-?\d+\.\d+)?,\s*(\-?\d+\.\d+?)$")
+    res = prog.match(location_name)
+    latitude, longitude, altitude = None, None, None
+    if res:
+        latitude, longitude, altitude = float(res.group(1)), float(res.group(2)), 0
+    elif location_name:
+        geolocator = GoogleV3()
+        loc = geolocator.geocode(location_name)
+        if loc:
+            latitude, longitude, altitude = loc.latitude, loc.longitude, loc.altitude
+
+    return (latitude, longitude, altitude)
+
+
+def get_cellids(lat, lng, radius=10):
+    origin = CellId.from_lat_lng(LatLng.from_degrees(lat, lng)).parent(15)
+    walk = [origin.id()]
+    right = origin.next()
+    left = origin.prev()
+
+    # Search around provided radius
+    for i in range(radius):
+        walk.append(right.id())
+        walk.append(left.id())
+        right = right.next()
+        left = left.prev()
+
+    # Return everything
+    return sorted(walk)

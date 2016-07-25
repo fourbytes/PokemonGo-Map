@@ -8,14 +8,15 @@ import math
 from threading import Thread, Semaphore
 
 from pgoapi import PGoApi
-from pgoapi.utilities import f2i, get_cellid
+from pgoapi.utilities import f2i
 
 from . import config
+from .utils import get_cellids
 from .models import parse_map
 
 log = logging.getLogger(__name__)
 
-TIMESTAMP = '\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000'
+TIMESTAMP = int.from_bytes(b'\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000', byteorder='big', signed=False)
 api = PGoApi()
 
 #Constants for Hex Grid
@@ -37,9 +38,10 @@ def send_map_request(api, position):
         api.get_map_objects(latitude=f2i(position[0]),
                             longitude=f2i(position[1]),
                             since_timestamp_ms=TIMESTAMP,
-                            cell_id=get_cellid(position[0], position[1]))
+                            cell_id=get_cellids(position[0], position[1]))
         return api.call()
     except Exception as e:
+        raise e
         log.warn("Uncaught exception when downloading map " + str(e))
         return False
 
@@ -53,7 +55,7 @@ def generate_location_steps(initial_location, num_steps):
     yield (initial_location[0],initial_location[1], 0) #Middle circle
 
     while ring < num_steps:
-        #Move the location diagonally to top left spot, then start the circle which will end up back here for the next ring 
+        #Move the location diagonally to top left spot, then start the circle which will end up back here for the next ring
         #Move Lat north first
         lat_location += lat_gap_degrees
         lng_location -= calculate_lng_degrees(lat_location)
@@ -113,8 +115,9 @@ def search_thread(args):
             try:
                 sem.acquire()
                 parse_map(response_dict, i, step, step_location)
-            except KeyError:
+            except KeyError as e:
                 log.error('Scan step {:d} failed. Response dictionary key error.'.format(step))
+                log.error(e)
                 failed_consecutive += 1
                 if(failed_consecutive >= config['REQ_MAX_FAILED']):
                     log.error('Niantic servers under heavy load. Waiting before trying again')

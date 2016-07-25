@@ -11,11 +11,9 @@ from flask_cors import CORS, cross_origin
 
 from pogom import config
 from pogom.app import Pogom
-from pogom.utils import get_args, insert_mock_data, load_credentials
+from pogom.utils import get_args, insert_mock_data, load_credentials, get_pos_by_name
 from pogom.search import search_loop
 from pogom.models import create_tables, Pokemon, Pokestop, Gym
-
-from pogom.pgoapi.utilities import get_pos_by_name
 
 log = logging.getLogger(__name__)
 

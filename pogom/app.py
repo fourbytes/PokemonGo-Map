@@ -55,7 +55,7 @@ class Pogom(Flask):
         lat = request.args.get('lat', type=float)
         lon = request.args.get('lon', type=float)
         if not (lat and lon):
-            print('[-] Invalid next location: %s,%s' % (lat, lon))
+            print(('[-] Invalid next location: %s,%s' % (lat, lon)))
             return 'bad parameters', 400
         else:
             config['NEXT_LOCATION'] = {'lat': lat, 'lon': lon}

@@ -10,7 +10,7 @@ FROM python:2.7-alpine
 EXPOSE 5000
 
 # Working directory for the application
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Set Entrypoint with hard-coded options
 ENTRYPOINT ["python", "./runserver.py", "--host", "0.0.0.0"]
@@ -22,7 +22,7 @@ CMD ["-h"]
 RUN apk add --no-cache ca-certificates
 
 # Copy Python requirements so we only rebuild deps if they have changed
-COPY requirements.txt /usr/src/app/
+COPY requirements.txt /app/
 
 # Install all prerequisites (build base used for gcc of some python modules)
 RUN apk add --no-cache build-base \

@@ -109,7 +109,7 @@ def parse_map(map_dict, iteration_num, step, step_location):
     gyms = {}
     scanned = {}
 
-    cells = map_dict['responses']['GET_MAP_OBJECTS']['map_cells']
+    cells = map_dict['responses']['GET_MAP_OBJECTS'].get('map_cells', [])
     for cell in cells:
         for p in cell.get('wild_pokemons', []):
             d_t = datetime.utcfromtimestamp(
@@ -181,13 +181,13 @@ def parse_map(map_dict, iteration_num, step, step_location):
     bulk_upsert(ScannedLocation, scanned)
 
 def bulk_upsert(cls, data):
-    num_rows = len(data.values())
+    num_rows = len(list(data.values()))
     i = 0
     step = 120
 
     while i < num_rows:
         log.debug("Inserting items {} to {}".format(i, min(i+step, num_rows)))
-        InsertQuery(cls, rows=data.values()[i:min(i+step, num_rows)]).upsert().execute()
+        InsertQuery(cls, rows=list(data.values())[i:min(i+step, num_rows)]).upsert().execute()
         i+=step
 
 
