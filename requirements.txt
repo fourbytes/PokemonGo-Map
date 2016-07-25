@@ -9,4 +9,5 @@ s2sphere
 gpsoauth
 protobuf-to-dict
 flask-cors
+flask-compress
 git+https://github.com/tejado/pgoapi.git
