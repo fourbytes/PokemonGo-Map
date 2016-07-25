@@ -12,7 +12,7 @@ from flask_cors import CORS, cross_origin
 from pogomap import config
 from pogomap.app import Pogom
 
-from pogomap.utils import get_args, insert_mock_data, load_credentials, get_pos_by_name
+from pogomap.utils import get_args, insert_mock_data, get_pos_by_name
 from pogomap.search import search_loop, create_search_threads
 from pogomap.models import init_database, create_tables
 
@@ -82,10 +82,7 @@ if __name__ == '__main__':
         CORS(app);
 
     config['ROOT_PATH'] = app.root_path
-    if args.gmaps_key is not None:
-        config['GMAPS_KEY'] = args.gmaps_key
-    else:
-        config['GMAPS_KEY'] = load_credentials(os.path.dirname(os.path.realpath(__file__)))['gmaps_key']
+    config['GMAPS_KEY'] = args.gmaps_key
 
     if args.no_server:
         while not search_thread.isAlive():
