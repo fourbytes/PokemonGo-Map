@@ -27,7 +27,7 @@ def init_database():
     if db is not None:
         return db
 
-    print args.db_type
+    print((args.db_type))
     if args.db_type == 'mysql':
         db = MySQLDatabase(
             args.db_name,
@@ -201,6 +201,8 @@ class ScannedLocation(BaseModel):
 
     @classmethod
     def get_recent(cls, swLat, swLng, neLat, neLng):
+        if None in (swLat, swLng, neLat, neLng):
+            swLat, swLng, neLat, neLng = -180, -180, 180, 180
         query = (ScannedLocation
                  .select()
                  .where((ScannedLocation.last_modified >= (datetime.utcnow() - timedelta(minutes=15))) &
@@ -222,7 +224,7 @@ def parse_map(map_dict, iteration_num, step, step_location):
     gyms = {}
     scanned = {}
 
-    cells = map_dict['responses']['GET_MAP_OBJECTS'].get('map_cells', [])
+    cells = map_dict['responses']['GET_MAP_OBJECTS']['map_cells']
     for cell in cells:
         if config['parse_pokemon']:
             for p in cell.get('wild_pokemons', []):
@@ -231,7 +233,7 @@ def parse_map(map_dict, iteration_num, step, step_location):
                      p['time_till_hidden_ms']) / 1000.0)
                 printPokemon(p['pokemon_data']['pokemon_id'],p['latitude'],p['longitude'],d_t)
                 pokemons[p['encounter_id']] = {
-                    'encounter_id': b64encode(str(p['encounter_id'])),
+                    'encounter_id': b64encode(str(p['encounter_id']).encode()),
                     'spawnpoint_id': p['spawnpoint_id'],
                     'pokemon_id': p['pokemon_data']['pokemon_id'],
                     'latitude': p['latitude'],
@@ -315,7 +317,7 @@ def bulk_upsert(cls, data):
         log.debug("Inserting items {} to {}".format(i, min(i+step, num_rows)))
 
         try:
-            InsertQuery(cls, rows=data.values()[i:min(i+step, num_rows)]).upsert().execute()
+            InsertQuery(cls, rows=list(data.values())[i:min(i+step, num_rows)]).upsert().execute()
         except OperationalError as e:
             log.warning("%s... Retrying", e)
             continue

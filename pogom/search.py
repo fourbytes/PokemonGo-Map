@@ -17,7 +17,6 @@ from .models import parse_map
 
 log = logging.getLogger(__name__)
 
-TIMESTAMP = int.from_bytes(b'\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000', byteorder='big', signed=False)
 api = PGoApi()
 
 #Constants for Hex Grid
@@ -37,11 +36,14 @@ def calculate_lng_degrees(lat):
 
 def send_map_request(api, position):
     try:
+        lat = position[0]
+        lng = position[1]
+        cell_ids = get_cellids(lat, lng)
         api.set_position(*position)
-        api.get_map_objects(latitude=f2i(position[0]),
-                            longitude=f2i(position[1]),
-                            since_timestamp_ms=TIMESTAMP,
-                            cell_id=get_cellids(position[0], position[1]))
+        api.get_map_objects(latitude=f2i(lat),
+                            longitude=f2i(lng),
+                            since_timestamp_ms=[0,] * len(cell_ids),
+                            cell_id=cell_ids)
         return api.call()
     except Exception as e:
         log.warning("Uncaught exception when downloading map " + str(e))
@@ -151,12 +153,13 @@ def search(args, i):
     position = (config['ORIGINAL_LATITUDE'], config['ORIGINAL_LONGITUDE'], 0)
 
     if api._auth_provider and api._auth_provider._ticket_expire:
-        remaining_time = api._auth_provider._ticket_expire/1000 - time.time()
+        #remaining_time = api._auth_provider._ticket_expire/1000 - time.time()
 
-        if remaining_time > 60:
-            log.info("Skipping Pokemon Go login process since already logged in for another {:.2f} seconds".format(remaining_time))
-        else:
-            login(args, position)
+        #if remaining_time > 60:
+        #    log.info("Skipping Pokemon Go login process since already logged in for another {:.2f} seconds".format(remaining_time))
+        #else:
+        #    login(args, position)
+        pass
     else:
         login(args, position)
 

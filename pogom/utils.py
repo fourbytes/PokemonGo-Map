@@ -12,14 +12,14 @@ from datetime import datetime, timedelta
 from geopy.geocoders import GoogleV3
 from s2sphere import CellId, LatLng
 from google.protobuf.internal import encoder
-import ConfigParser
+import configparser
 import platform
 import logging
 import shutil
 
 from . import config
 
-from exceptions import APIKeyException
+from .exceptions import APIKeyException
 
 DEFAULT_THREADS = 1
 
@@ -35,7 +35,7 @@ def verify_config_file_exists(filename):
 
 def parse_config(args):
     verify_config_file_exists('../config/config.ini')
-    Config = ConfigParser.ConfigParser()
+    Config = configparser.ConfigParser()
     Config.read(os.path.join(os.path.dirname(__file__), '../config/config.ini'))
     args.auth_service = Config.get('Authentication', 'Service')
     args.username = Config.get('Authentication', 'Username')
@@ -55,7 +55,7 @@ def parse_config(args):
 
 def parse_db_config(args):
     verify_config_file_exists('../config/config.ini')
-    Config = ConfigParser.ConfigParser()
+    Config = configparser.ConfigParser()
     Config.read(os.path.join(os.path.dirname(__file__), '../config/config.ini'))
     args.db_type = Config.get('Database','Type')
     args.db_name = Config.get('Database', 'Database_Name')
@@ -104,12 +104,12 @@ def get_args():
         if args.only_server:
             if args.location is None:
                 parser.print_usage()
-                print sys.argv[0] + ': error: arguments -l/--location is required'
+                print(sys.argv[0] + ': error: arguments -l/--location is required')
                 sys.exit(1);
         else:
             if (args.username is None or args.location is None or args.step_limit is None):
                 parser.print_usage()
-                print sys.argv[0] + ': error: arguments -u/--username, -l/--location, -st/--step-limit are required'
+                print(sys.argv[0] + ': error: arguments -u/--username, -l/--location, -st/--step-limit are required')
                 sys.exit(1);
 
             if config["PASSWORD"] is None and args.password is None:
