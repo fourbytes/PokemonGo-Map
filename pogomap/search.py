@@ -14,7 +14,7 @@ from pgoapi.utilities import f2i
 
 from . import config
 from .utils import get_cellids
-from .models import parse_map
+from .models import parse_map, init_database
 
 log = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ def create_search_threads(num) :
 
 def search_thread(args):
     # Setup DB connection
-    r.connect(db='pogomap').repl()
+    rdb = init_database()
 
     queue = args
     while True:
@@ -144,7 +144,7 @@ def search_thread(args):
         time.sleep(config['REQ_SLEEP'])
 
     # Close DB connection
-    r.close()
+    rdb.close()
 
 def process_search_threads(search_threads, curr_steps, total_steps):
     for thread in search_threads:
