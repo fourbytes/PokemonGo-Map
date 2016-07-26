@@ -30,4 +30,4 @@ RUN apk add --no-cache build-base git \
  && apk del build-base
 
 # Add the rest of the app code
-COPY . /usr/src/app
+COPY . /app

@@ -12,9 +12,9 @@ db-pass:
 
 # Search settings
 location: Redfern Park, Australia
-no-gyms: false
-no-pokemon:  false
-no-pokestops: false
+#no-gyms
+#no-pokemon
+#no-pokestops
 num-threads: 2
 scan-delay: 1
 step-limit: 12
