@@ -13,10 +13,7 @@ EXPOSE 5000
 WORKDIR /app
 
 # Set Entrypoint with hard-coded options
-ENTRYPOINT ["python", "./runserver.py", "--host", "0.0.0.0"]
-
-# Set default options when container is run without any command line arguments
-CMD ["-h"]
+ENTRYPOINT ["python", "./runserver.py"]
 
 # add certificates to talk to the internets
 RUN apk add --no-cache ca-certificates

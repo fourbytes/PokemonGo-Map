@@ -8,7 +8,7 @@ db-host: 127.0.0.1
 db-port: 28015
 db-name: pogomap
 db-user: admin
-db-pass:
+# db-pass:
 
 # Search settings
 location: Redfern Park, Australia
