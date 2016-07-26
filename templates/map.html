@@ -124,10 +124,16 @@
 			<hr width="100%">
 
 			<div class="form-control">
+				<label for="heatmap-pokemon">
+					<h3>Show heatmap for</h3>
+					<select id="heatmap-pokemon"></select>
+				</label>
+			</div>
+			<div class="form-control">
 				<label for="exclude-pokemon">
-					<h3>Hide common Pokémon</h3>
-      					<select id="exclude-pokemon" multiple="multiple"></select>
-    				</label>
+					<h3>Hide certain Pokémon</h3>
+  				<select id="exclude-pokemon" multiple="multiple"></select>
+				</label>
 			</div>
 			<div class="form-control">
 				<label for="notify-pokemon">
@@ -164,7 +170,7 @@
 	</script>
 
 	<script src="static/map.js"></script>
-	<script defer src="https://maps.googleapis.com/maps/api/js?key={{ gmaps_key }}&amp;callback=initMap&amp;libraries=places,geometry"></script>
+	<script defer src="https://maps.googleapis.com/maps/api/js?key={{ gmaps_key }}&amp;callback=initMap&amp;libraries=places,geometry,visualization"></script>
 
 	</body>
 </html>

@@ -30,14 +30,14 @@ class Pogom(Flask):
         self.route("/loc", methods=['GET'])(self.loc)
         self.route("/next_loc", methods=['POST'])(self.next_loc)
         self.route("/mobile", methods=['GET'])(self.list_pokemon)
+        self.route('/points', methods=['GET'])(self.retrive_points)
 
         @self.before_request
         def before():
             ctx = stack.top
             if ctx is not None:
                 if not hasattr(ctx, 'rethinkdb'):
-                    ctx.rethinkdb = r.connect(db='pogomap')
-                    ctx.rethinkdb.repl()
+                    ctx.rethinkdb = init_database()
 
         @self.teardown_appcontext
         def teardown(exception):
@@ -85,6 +85,18 @@ class Pogom(Flask):
             d['scanned'] = get_recently_scanned(swLat, swLng, neLat, neLng)
 
         return jsonify(d)
+
+    def retrive_points(self):
+        pokemon_id = int(request.args.get('pokemon_id'))
+
+        res = r.db('pogomap').table('pokemon') \
+                             .filter({'pokemon_id': pokemon_id}) \
+                             .order_by(r.desc('disappear_time')) \
+                             .limit(1000) \
+                             .map(lambda p: (p['latitude'], p['longitude'], p['disappear_time'])).run()
+        res = list(res)
+
+        return jsonify({'count': len(res), 'points': res})
 
     def loc(self):
         d = {}

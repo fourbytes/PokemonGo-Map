@@ -26,14 +26,16 @@ TEAM_INSTINCT = 3
 
 def init_database():
     try:
-        DB_NAME = 'pogomap'
-        log.info('Initializing rethinkdb connection...')
-        r.connect(db=DB_NAME).repl()
-        if not r.db_list().contains(DB_NAME).run():
+        conn = r.connect(host=config['db_host'], port=config['db_port'], db=config['db_name'], user=config['db_user'], password=config['db_pass'])
+        conn.repl()
+
+        if not r.db_list().contains(config['db_name']).run():
             log.info('Creating database...')
             r.db_create(DB_NAME).run()
+
+        return conn
     except r.ReqlDriverError as e:
-        log.error('Failed to connect to rethinkdb!')
+        log.error('Failed to connect to rethinkdb: {}'.format(e))
         exit(1)
 
 def create_tables():

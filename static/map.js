@@ -14,6 +14,7 @@ var excludedPokemon = [];
 var notifiedPokemon = [];
 
 var map;
+var currentHeatmap;
 var rawDataIsLoading = false;
 var locationMarker;
 var marker;
@@ -117,6 +118,10 @@ var StoreOptions = {
     remember_select_notify: {
         default: [],
         type: StoreTypes.JSON
+    },
+    remember_heatmap_pokemon: {
+        default: 0,
+        type: StoreTypes.Number
     },
     showGyms: {
         default: false,
@@ -1025,6 +1030,39 @@ function centerMap(lat, lng, zoom) {
     }
 }
 
+function updateHeatmapOverlay() {
+    var heatmapPokemonId = Store.get('remember_heatmap_pokemon');
+    if (heatmapPokemonId == 0) return;
+
+    $selectHeatmap = $("#heatmap-pokemon");
+
+    $.ajax({
+        url: "points",
+        type: 'GET',
+        data: {
+            'pokemon_id': heatmapPokemonId
+        },
+        dataType: "json",
+        beforeSend: function() {
+            $selectHeatmap.attr('disabled', true);
+        },
+        success: function(data) {
+            var heatMapData = data.points.map(function(p) { return new google.maps.LatLng(p[0], p[1]); });
+
+            if (currentHeatmap) currentHeatmap.setMap(null);
+            currentHeatmap = new google.maps.visualization.HeatmapLayer({
+                data: heatMapData,
+                radius: 35,
+                // maxIntensity: 0.85,
+                opacity: 0.75
+            });
+            currentHeatmap.setMap(map);
+
+            $selectHeatmap.attr('disabled', false);
+        }
+    })
+}
+
 //
 // Page Ready Exection
 //
@@ -1044,10 +1082,11 @@ $(function () {
 
     $selectExclude = $("#exclude-pokemon");
     $selectNotify  = $("#notify-pokemon");
+    $selectHeatmap = $("#heatmap-pokemon");
 
     // Load pokemon names and populate lists
     $.getJSON("static/locales/pokemon." + language + ".json").done(function(data) {
-        var pokeList = []
+        var pokeList = [];
 
         $.each(data, function(key, value) {
             pokeList.push( { id: key, text: value + ' - #' + key } );
@@ -1064,20 +1103,34 @@ $(function () {
             data: pokeList
         });
 
-        // setup list change behavior now that we have the list to work from
-        $selectExclude.on("change", function (e) {
-            excludedPokemon = $selectExclude.val().map(Number);
-            clearStaleMarkers();
-            Store.set('remember_select_exclude', excludedPokemon);
+        var heatmapPokeList = pokeList;
+        heatmapPokeList.unshift({ id: 0, text: "None" });
+
+        $selectHeatmap.select2({
+            placeholder: "Select Pokémon",
+            data: heatmapPokeList
         });
-        $selectNotify.on("change", function (e) {
+
+        // setup list change behavior now that we have the list to work from
+        $selectExclude.on("change", function(e) {
+            excludedPokemon = $selectExclude.val().map(Number);
+            Store.set('remember_select_exclude', excludedPokemon);
+            clearStaleMarkers();
+        });
+        $selectNotify.on("change", function(e) {
             notifiedPokemon = $selectNotify.val().map(Number);
             Store.set('remember_select_notify', notifiedPokemon);
         });
+        $selectHeatmap.on("change", function(e) {
+            heatmapPokemon = Number($(this).val());
+            Store.set('remember_heatmap_pokemon', heatmapPokemon);
+            updateHeatmapOverlay();
+        })
 
         // recall saved lists
         $selectExclude.val(Store.get('remember_select_exclude')).trigger("change");
         $selectNotify.val(Store.get('remember_select_notify')).trigger("change");
+        $selectHeatmap.val(Store.get('remember_heatmap_pokemon')).trigger("change");
     });
 
     // run interval timers to regularly update map and timediffs

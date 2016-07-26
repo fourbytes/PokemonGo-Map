@@ -42,6 +42,12 @@ if __name__ == '__main__':
     config['parse_pokestops'] = not args.no_pokestops
     config['parse_gyms'] = not args.no_gyms
 
+    config['db_host'] = args.db_host
+    config['db_port'] = args.db_port
+    config['db_user'] = args.db_user
+    config['db_pass'] = args.db_pass
+    config['db_name'] = args.db_name
+
     if args.debug:
         logging.getLogger("requests").setLevel(logging.DEBUG)
         logging.getLogger("pgoapi").setLevel(logging.DEBUG)
@@ -67,7 +73,6 @@ if __name__ == '__main__':
     config['ORIGINAL_LATITUDE'] = position[0]
     config['ORIGINAL_LONGITUDE'] = position[1]
     config['LOCALE'] = args.locale
-    config['CHINA'] = args.china
 
     if not args.only_server:
         create_search_threads(args.num_threads)
