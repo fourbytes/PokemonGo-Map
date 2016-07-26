@@ -31,7 +31,7 @@ def init_database():
 
         if not r.db_list().contains(config['db_name']).run():
             log.info('Creating database...')
-            r.db_create(DB_NAME).run()
+            r.db_create(config['db_name']).run()
 
         return conn
     except r.ReqlDriverError as e:
