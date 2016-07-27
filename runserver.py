@@ -12,8 +12,8 @@ from flask_cors import CORS, cross_origin
 from pogomap import config
 from pogomap.app import Pogom
 
-from pogomap.utils import get_args, insert_mock_data, get_pos_by_name
-from pogomap.search import search_loop, create_search_threads
+from pogomap.utils import get_args
+from pogomap.search import search_loop, set_location, set_cover
 from pogomap.models import init_database, create_tables
 
 log = logging.getLogger(__name__)
@@ -56,13 +56,9 @@ if __name__ == '__main__':
     init_database()
     create_tables()
 
-    position = get_pos_by_name(args.location)
-    if not any(position):
-        log.error('Could not get a position by name, aborting.')
-        sys.exit()
+    set_location(args.location, args.radius)
+    set_cover()
 
-    log.info('Parsed location is: {:.4f}/{:.4f}/{:.4f} (lat/lng/alt)'.
-             format(*position))
     if args.no_pokemon:
         log.info('Parsing of Pokemon disabled.')
     if args.no_pokestops:
@@ -70,16 +66,10 @@ if __name__ == '__main__':
     if args.no_gyms:
         log.info('Parsing of Gyms disabled.')
 
-    config['ORIGINAL_LATITUDE'] = position[0]
-    config['ORIGINAL_LONGITUDE'] = position[1]
     config['LOCALE'] = args.locale
 
     if not args.only_server:
-        create_search_threads(args.num_threads)
-        if not args.mock:
-            start_locator_thread(args)
-        else:
-            insert_mock_data()
+        start_locator_thread(args)
 
     app = Pogom(__name__)
 

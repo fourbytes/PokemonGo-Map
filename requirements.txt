@@ -11,4 +11,7 @@ protobuf-to-dict
 flask-cors
 flask-compress
 pytz
-git+https://github.com/tejado/pgoapi.git
+pycurl
+git+https://github.com/fourbytes/pgoapi.git
+# -e ../pgoapi
+geographiclib

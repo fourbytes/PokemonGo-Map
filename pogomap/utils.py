@@ -39,12 +39,12 @@ def get_args():
     parser.add_argument('-l', '--location', type=str, help='Location, can be an address or coordinates')
     parser.add_argument('-st', '--step-limit', help='Steps', type=int, default=12)
     parser.add_argument('-sd', '--scan-delay', help='Time delay before beginning new scan', type=int, default=1)
+    parser.add_argument('-r', '--radius', help='Time delay before beginning new scan', type=int, default=1000)
     parser.add_argument('-dc', '--display-in-console',help='Display Found Pokemon in Console',action='store_true', default=False)
     parser.add_argument('-H', '--host', help='Set web server listening host', default='127.0.0.1')
     parser.add_argument('-P', '--port', type=int, help='Set web server listening port', default=5000)
     parser.add_argument('-L', '--locale', help='Locale for Pokemon names: default en, check locale folder for more options', default='en')
     parser.add_argument('-d', '--debug', help='Debug Mode', action='store_true')
-    parser.add_argument('-m', '--mock', help='Mock mode. Starts the web server but not the background thread.', action='store_true', default=False)
     parser.add_argument('-ns', '--no-server', help='No-Server Mode. Starts the searcher but not the Webserver.', action='store_true', default=False)
     parser.add_argument('-os', '--only-server', help='Server-Only Mode. Starts only the Webserver without the searcher.', action='store_true', default=False)
     parser.add_argument('-fl', '--fixed-location', help='Hides the search bar for use in shared maps.', action='store_true', default=False)
@@ -80,53 +80,6 @@ def get_args():
             args.password = config["PASSWORD"]
 
     return args
-
-def insert_mock_data():
-    num_pokemon = 6
-    num_pokestop = 6
-    num_gym = 6
-
-    from .models import Pokemon, Pokestop, Gym
-    from .search import generate_location_steps
-
-    latitude, longitude = float(config['ORIGINAL_LATITUDE']), float(config['ORIGINAL_LONGITUDE'])
-
-    locations = [l for l in generate_location_steps((latitude, longitude), num_pokemon)]
-    disappear_time = datetime.now() + timedelta(hours=1)
-
-    detect_time = datetime.now()
-
-    for i in range(num_pokemon):
-        Pokemon.create(encounter_id=uuid.uuid4(),
-                       spawnpoint_id='sp{}'.format(i),
-                       pokemon_id=(i+1) % 150,
-                       latitude=locations[i][0],
-                       longitude=locations[i][1],
-                       disappear_time=disappear_time,
-                       detect_time=detect_time)
-
-    for i in range(num_pokestop):
-
-        Pokestop.create(pokestop_id=uuid.uuid4(),
-                        enabled=True,
-                        latitude=locations[i+num_pokemon][0],
-                        longitude=locations[i+num_pokemon][1],
-                        last_modified=datetime.now(),
-                        #Every other pokestop be lured
-                        lure_expiration=disappear_time if (i % 2 == 0) else None,
-                        active_pokemon_id=i
-                        )
-
-    for i in range(num_gym):
-        Gym.create(gym_id=uuid.uuid4(),
-                   team_id=i % 3,
-                   guard_pokemon_id=(i+1) % 150,
-                   latitude=locations[i + num_pokemon + num_pokestop][0],
-                   longitude=locations[i + num_pokemon + num_pokestop][1],
-                   last_modified=datetime.now(),
-                   enabled=True,
-                   gym_points=1000
-                   )
 
 def get_pokemon_name(pokemon_id):
     if not hasattr(get_pokemon_name, 'names'):

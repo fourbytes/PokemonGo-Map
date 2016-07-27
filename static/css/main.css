@@ -1750,7 +1750,7 @@ body {
       text-decoration: none;
       -webkit-tap-highlight-color: transparent; }
       #header > a[href="#nav"]:before {
-        content: "";
+        content: "";
         -moz-osx-font-smoothing: grayscale;
         -webkit-font-smoothing: antialiased;
         font-family: FontAwesome;

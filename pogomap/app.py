@@ -62,12 +62,12 @@ class Pogom(Flask):
     def raw_data(self):
         d = {}
         try:
-            swLat = float(request.args.get('swLat')) - 20.0
-            swLng = float(request.args.get('swLng')) - 20.0
-            neLat = float(request.args.get('neLat')) + 20.0
-            neLng = float(request.args.get('neLng')) + 20.0
+            swLat = float(request.args.get('swLat'))
+            swLng = float(request.args.get('swLng'))
+            neLat = float(request.args.get('neLat'))
+            neLng = float(request.args.get('neLng'))
         except ValueError:
-            swLat, swLng, neLat, neLng = -180, -180, 180, 180
+            swLat, swLng, neLat, neLng = -180.0, -180.0, 180.0, 180.0
 
         if request.args.get('pokemon', 'true') == 'true':
             if request.args.get('ids'):
@@ -81,8 +81,7 @@ class Pogom(Flask):
         if request.args.get('gyms', 'true') == 'true':
             d['gyms'] = get_gyms(swLat, swLng, neLat, neLng)
 
-        if request.args.get('scanned', 'true') == 'true':
-            d['scanned'] = get_recently_scanned(swLat, swLng, neLat, neLng)
+        d['searchRadius'] = config['RADIUS']
 
         return jsonify(d)
 
