@@ -42,6 +42,13 @@ def create_tables():
             r.table_create(table).run()
             log.info('Created table "{}"'.format(table))
 
+    if 'disappear_time' not in r.table('pokemon').index_list().run():
+        # Create index for disappear time, this _should_ improve performance
+        # when filtering and sorting by this field.
+        r.table('pokemon').index_create('disappear_time').run()
+        log.info('Created secondary index "disappear_time" on table "pokemon"')
+
+
 def utc_localize(dt):
     if dt is None:
         return
