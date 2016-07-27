@@ -34,7 +34,8 @@ def set_cover():
     d = math.sqrt(3) * 100
     points = [[{'lat2': lat, 'lon2': lng, 's': 0}]]
 
-    for i in range(1, int(maxsize)):
+    i = 1
+    while True:
         oor_counter = 0
 
         points.append([])
@@ -49,6 +50,8 @@ def set_cover():
 
         if oor_counter == 6 * i:
             break
+
+        i += 1
 
     cover = [{"lat": p['lat2'], "lng": p['lon2']}
              for sublist in points for p in sublist if p['s'] < config['RADIUS']]
