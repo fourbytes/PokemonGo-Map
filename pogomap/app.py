@@ -87,7 +87,7 @@ class Pogom(Flask):
     def retrieve_points(self):
         pokemon_id = int(request.args.get('pokemon_id'))
 
-        res = r.db('pogomap').table('pokemon') \
+        res = r.db(config['db_name']).table('pokemon') \
                              .filter({'pokemon_id': pokemon_id}) \
                              .order_by(r.desc('disappear_time')) \
                              .limit(1000) \
