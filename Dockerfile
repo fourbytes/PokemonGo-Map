@@ -22,7 +22,7 @@ RUN apk add --no-cache ca-certificates
 COPY requirements.txt /app/
 
 # Install all prerequisites (build base used for gcc of some python modules)
-RUN apk add --no-cache build-base git curl \
+RUN apk add --no-cache build-base git curl curl-dev \
  && pip install --no-cache-dir -r requirements.txt \
  && apk del build-base
 

@@ -123,8 +123,9 @@ class Pogom(Flask):
             log.warning('Invalid next location: %s,%s' % (lat, lon))
             return 'bad parameters', 400
         elif config.get('NEXT_LOCATION', {}).get('lat') != lat and config.get('NEXT_LOCATION', {}).get('lon') != lon:
-            config['NEXT_LOCATION'] = {'lat': lat, 'lon': lon}
-            log.info('Changing next location: %s,%s' % (lat, lon))
+            config['ORIGINAL_LATITUDE'], config['ORIGINAL_LONGITUDE'] = lat, lon
+            config['CHANGE'] = True
+            log.info('Changing location: %s,%s' % (lat, lon))
             return 'ok', 200
         else:
             return 'ok', 200

@@ -235,14 +235,13 @@ def search(args):
 
     i = 1
     while len(queue) > 0:
+        log.info('{} : {}'.format(len(queue), i))
         c = queue.pop()
         step_location = (c["lat"], c["lng"], 0)
         log.debug('Scanning step {:d} of {:d}.'.format(i, num_steps))
         log.debug('Scan location is {:f}, {:f}'.format(step_location[0], step_location[1]))
-
         login_if_necessary(args, step_location)
         error_throttle()
-
         api.set_position(*step_location)
         cell_ids = get_cellids(*step_location)
         api.get_map_objects(latitude=f2i(step_location[0]),
@@ -250,7 +249,6 @@ def search(args):
                             since_timestamp_ms=[0,] * len(cell_ids),
                             cell_id=cell_ids)
         api.call_async(callback)
-        #callback(api.call())
 
         if config['CHANGE']:
             log.info("Changing scan location")
@@ -266,41 +264,6 @@ def search(args):
     api.finish_async()
     log.info(api._rpc._curl.stats())
     api._rpc._curl.reset_stats()
-
-
-    # num_steps = args.step_limit
-    # total_steps = (3 * (num_steps**2)) - (3 * num_steps) + 1
-    # position = (config['ORIGINAL_LATITUDE'], config['ORIGINAL_LONGITUDE'], 0)
-    #
-    # if api._auth_provider and api._auth_provider._ticket_expire:
-    #     #remaining_time = api._auth_provider._ticket_expire/1000 - time.time()
-    #
-    #     #if remaining_time > 60:
-    #     #    log.info("Skipping Pokemon Go login process since already logged in for another {:.2f} seconds".format(remaining_time))
-    #     #else:
-    #     #    login(args, position)
-    #     pass
-    # else:
-    #     login(args, position)
-    #
-    # lock = Lock()
-    #
-    # search_threads = []
-    # curr_steps = 0
-    # max_threads = args.num_threads
-    #
-    # for step, step_location in enumerate(generate_location_steps(position, num_steps), 1):
-    #     if 'NEXT_LOCATION' in config:
-    #         log.info('New location found. Starting new scan.')
-    #         config['ORIGINAL_LATITUDE'] = config['NEXT_LOCATION']['lat']
-    #         config['ORIGINAL_LONGITUDE'] = config['NEXT_LOCATION']['lon']
-    #         config.pop('NEXT_LOCATION', None)
-    #         search_queue.queue.clear()
-    #         search(args)
-    #         return
-    #
-    #     search_args = ( total_steps, step_location, step, lock)
-    #     search_queue.put(search_args)
 
 
 def throttle():
