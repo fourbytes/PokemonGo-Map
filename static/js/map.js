@@ -5,6 +5,7 @@
 
 var $selectExclude;
 var $selectNotify;
+var $selectHeatmap;
 
 var language = document.documentElement.lang == "" ? "en" : document.documentElement.lang;
 var idToPokemon = {};
@@ -995,7 +996,7 @@ function updateHeatmapOverlay() {
     var heatmapPokemonId = Store.get('rememberHeatmapPokemon');
     if (heatmapPokemonId == 0) return;
 
-    var $selectHeatmap = $("#heatmap-pokemon");
+    $selectHeatmap = $("#heatmap-pokemon");
 
     $.ajax({
         url: "points",
@@ -1045,9 +1046,9 @@ $(function () {
         return $state;
     };
 
-    var $selectExclude = $("#exclude-pokemon");
-    var $selectNotify  = $("#notify-pokemon");
-    var $selectHeatmap = $("#heatmap-pokemon");
+    $selectExclude = $("#exclude-pokemon");
+    $selectNotify  = $("#notify-pokemon");
+    $selectHeatmap = $("#heatmap-pokemon");
     const numberOfPokemon = 151;
 
     // Load pokemon names and populate lists
@@ -1083,11 +1084,13 @@ $(function () {
 
         // setup list change behavior now that we have the list to work from
         $selectExclude.on("change", function(e) {
-            Store.set('rememberSelectExclude', $(this).val().map(Number));
+            excludedPokemon = $(this).val().map(Number);
+            Store.set('rememberSelectExclude', excludedPokemon);
             clearStaleMarkers();
         });
         $selectNotify.on("change", function(e) {
-            Store.set('rememberSelectNotift', $(this).val().map(Number));
+            notifiedPokemon = $(this).val().map(Number)
+            Store.set('rememberSelectNotift', notifiedPokemon);
         });
         $selectHeatmap.on("change", function(e) {
             Store.set('rememberHeatmapPokemon', Number($(this).val()));

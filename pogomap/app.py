@@ -14,12 +14,12 @@ from s2sphere import *
 
 from . import config
 from .utils import get_args
-from .models import get_active_pokemon
-from .models import get_active_pokemon_by_id
-from .models import get_gyms
-from .models import get_pokestops
-from .models import init_database
-from .models import set_cover
+from .search import set_cover
+from .models import (get_active_pokemon,
+                     get_active_pokemon_by_id,
+                     get_gyms,
+                     get_pokestops,
+                     init_database)
 
 log = logging.getLogger(__name__)
 compress = Compress()
