@@ -238,7 +238,6 @@ def search(args):
 
     i = 1
     while len(queue) > 0:
-        log.info('{} : {}'.format(len(queue), i))
         c = queue.pop()
         step_location = (c["lat"], c["lng"], 0)
         log.debug('Scanning step {:d} of {:d}.'.format(i, num_steps))
