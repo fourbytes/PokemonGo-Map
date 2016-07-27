@@ -31,16 +31,12 @@ def verify_config_file_exists(filename):
         shutil.copy2(fullpath + '.example', fullpath)
 
 def get_args():
-    # fuck PEP8
     parser = configargparse.ArgParser(default_config_files=['config/config.ini'])
     parser.add_argument('-a', '--auth-service', type=str.lower, help='Auth Service', default='ptc')
     parser.add_argument('-u', '--username', help='Username')
     parser.add_argument('-p', '--password', help='Password')
     parser.add_argument('-l', '--location', type=str, help='Location, can be an address or coordinates')
-    parser.add_argument('-st', '--step-limit', help='Steps', type=int, default=12)
-    parser.add_argument('-sd', '--scan-delay', help='Time delay before beginning new scan', type=int, default=1)
     parser.add_argument('-r', '--radius', help='Time delay before beginning new scan', type=int, default=1000)
-    parser.add_argument('-dc', '--display-in-console',help='Display Found Pokemon in Console',action='store_true', default=False)
     parser.add_argument('-H', '--host', help='Set web server listening host', default='127.0.0.1')
     parser.add_argument('-P', '--port', type=int, help='Set web server listening port', default=5000)
     parser.add_argument('-L', '--locale', help='Locale for Pokemon names: default en, check locale folder for more options', default='en')

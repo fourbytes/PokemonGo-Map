@@ -259,7 +259,7 @@ def search(args):
             queue.extend(config['COVER'])
 
         if (i%20 == 0):
-            log.info(api._rpc._curl.stats())
+            log.debug(api._rpc._curl.stats())
 
         i += 1
 
