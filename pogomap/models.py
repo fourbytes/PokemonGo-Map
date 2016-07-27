@@ -2,17 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import os
 import pytz
 import rethinkdb as r
 from datetime import datetime
 from datetime import timedelta
-from base64 import b64encode
 
 from . import config
 from .utils import get_pokemon_name, get_args
-from .transform import transform_from_wgs_to_gcj
-from .customLog import printPokemon
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(module)12s] [%(levelname)7s] %(message)s')
 

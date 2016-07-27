@@ -8,7 +8,6 @@ var $selectNotify;
 
 var language = document.documentElement.lang == "" ? "en" : document.documentElement.lang;
 var idToPokemon = {};
-//google.maps.Marker.prototype.pokemon_id = -1;
 
 var excludedPokemon = [];
 var notifiedPokemon = [];
@@ -30,16 +29,16 @@ var pGoStyleNoLabels=[{"featureType":"landscape.man_made","elementType":"geometr
 
 var selectedStyle = 'light';
 
-var map_data = {
+var mapData = {
     pokemons: {},
     gyms: {},
     pokestops: {},
     lure_pokemons: {},
     radius: 0
 };
-var gym_types = ["Uncontested", "Mystic", "Valor", "Instinct"];
+var gymTypes = ["Uncontested", "Mystic", "Valor", "Instinct"];
 var audio = new Audio('static/sounds/ding.mp3');
-var pokemon_sprites = {
+var pokemonSprites = {
     normal: {
         columns: 12,
         icon_width: 30,
@@ -112,15 +111,15 @@ var StoreOptions = {
         default: 'roadmap',
         type: StoreTypes.String
     },
-    remember_select_exclude: {
+    rememberSelectExclude: {
         default: [],
         type: StoreTypes.JSON
     },
-    remember_select_notify: {
+    rememberSelectNotift: {
         default: [],
         type: StoreTypes.JSON
     },
-    remember_heatmap_pokemon: {
+    rememberHeatmapPokemon: {
         default: 0,
         type: StoreTypes.Number
     },
@@ -212,8 +211,8 @@ function notifyAboutPokemon(id) {
 }
 
 function removePokemonMarker(id) {
-    map_data.pokemons[encounter_id].hidden = true;
-    map_data.pokemons[id].marker.setMap(null);
+    mapData.pokemons[encounter_id].hidden = true;
+    mapData.pokemons[id].marker.setMap(null);
 }
 
 function initMap() {
@@ -243,17 +242,17 @@ function initMap() {
         },
     });
 
-	var style_NoLabels = new google.maps.StyledMapType(noLabelsStyle, {name: "No Labels"});
-	map.mapTypes.set('nolabels_style', style_NoLabels);
+  	var style_NoLabels = new google.maps.StyledMapType(noLabelsStyle, {name: "No Labels"});
+  	map.mapTypes.set('nolabels_style', style_NoLabels);
 
-	var style_dark = new google.maps.StyledMapType(darkStyle, {name: "Dark"});
-	map.mapTypes.set('dark_style', style_dark);
+  	var style_dark = new google.maps.StyledMapType(darkStyle, {name: "Dark"});
+  	map.mapTypes.set('dark_style', style_dark);
 
-	var style_light2 = new google.maps.StyledMapType(light2Style, {name: "Light2"});
-	map.mapTypes.set('style_light2', style_light2);
+  	var style_light2 = new google.maps.StyledMapType(light2Style, {name: "Light2"});
+  	map.mapTypes.set('style_light2', style_light2);
 
-	var style_pgo = new google.maps.StyledMapType(pGoStyle, {name: "PokemonGo"});
-	map.mapTypes.set('style_pgo', style_pgo);
+  	var style_pgo = new google.maps.StyledMapType(pGoStyle, {name: "PokemonGo"});
+  	map.mapTypes.set('style_pgo', style_pgo);
 
     var style_dark_nl = new google.maps.StyledMapType(darkStyleNoLabels, {name: "Dark (No Labels)"});
     map.mapTypes.set('dark_style_nl', style_dark_nl);
@@ -280,8 +279,8 @@ function initMap() {
     });
 
     google.maps.event.addListener(map, 'zoom_changed', function() {
-        redrawPokemon(map_data.pokemons);
-        redrawPokemon(map_data.lure_pokemons);
+        redrawPokemon(mapData.pokemons);
+        redrawPokemon(mapData.lure_pokemons);
     });
 };
 
@@ -342,17 +341,17 @@ function initSidebar() {
     });
 
     var icons = $('#pokemon-icons');
-    $.each(pokemon_sprites, function(key, value) {
+    $.each(pokemonSprites, function(key, value) {
         icons.append($('<option></option>').attr("value", key).text(value.name));
     });
-    icons.val((pokemon_sprites[Store.get('pokemonIcons')]) ? Store.get('pokemonIcons') : 'highres');
+    icons.val((pokemonSprites[Store.get('pokemonIcons')]) ? Store.get('pokemonIcons') : 'highres');
     $('#pokemon-icon-size').val(Store.get('iconSizeModifier'));
 }
 
 function pad(number) { return number <= 99 ? ("0" + number).slice(-2) : number; }
 
 function pokemonLabel(name, disappear_time, pokemon_id, latitude, longitude, id) {
-    disappear_date = new Date(disappear_time)
+    var disappearDate = new Date(disappear_time)
 
     var contentstring = `
         <div>
@@ -363,7 +362,7 @@ function pokemonLabel(name, disappear_time, pokemon_id, latitude, longitude, id)
             </small>
         </div>
         <div>
-            Disappears at ${pad(disappear_date.getHours())}:${pad(disappear_date.getMinutes())}:${pad(disappear_date.getSeconds())}
+            Disappears at ${pad(disappearDate.getHours())}:${pad(disappearDate.getMinutes())}:${pad(disappearDate.getSeconds())}
             <span class='label-countdown' disappears-at='${disappear_time}'>(00m00s)</span>
         </div>
         <div>
@@ -499,7 +498,7 @@ function setupPokemonMarker(item, skipNotification) {
     // Scale icon size up with the map exponentially
     var icon_size = 2 + (map.getZoom()-3) * (map.getZoom()-3) * .2 + Store.get('iconSizeModifier');
     var pokemon_index = item.pokemon_id - 1;
-    var sprite = pokemon_sprites[Store.get('pokemonIcons')] || pokemon_sprites['highres']
+    var sprite = pokemonSprites[Store.get('pokemonIcons')] || pokemonSprites['highres']
     var icon = getGoogleSprite(pokemon_index, sprite, icon_size);
 
     var marker = new google.maps.Marker({
@@ -540,11 +539,11 @@ function setupGymMarker(item) {
             lng: item.longitude
         },
         map: map,
-        icon: 'static/forts/' + gym_types[item.team_id] + '.png'
+        icon: 'static/forts/' + gymTypes[item.team_id] + '.png'
     });
 
     marker.infoWindow = new google.maps.InfoWindow({
-        content: gymLabel(gym_types[item.team_id], item.team_id, item.gym_points, item.latitude, item.longitude),
+        content: gymLabel(gymTypes[item.team_id], item.team_id, item.gym_points, item.latitude, item.longitude),
         disableAutoPan: true
     });
 
@@ -578,11 +577,11 @@ function setupPokestopMarker(item) {
 
 function setupRadiusMarker() {
     if (rmarker != null) rmarker.setMap(null);
-    if (map_data.radius == 0) return;
+    if (Store.get('showRadius') == false || mapData.radius == 0) return;
     rmarker = new google.maps.Circle({
         map: map,
         center: marker.position,
-        radius: map_data.radius,
+        radius: mapData.radius,
         fillColor: "rgba(70, 70, 250, 0.1)",
         strokeWeight: 0.4
     });
@@ -625,21 +624,21 @@ function addListeners(marker) {
 };
 
 function clearStaleMarkers() {
-    $.each(map_data.pokemons, function(key, value) {
+    $.each(mapData.pokemons, function(key, value) {
 
-        if (map_data.pokemons[key]['disappear_time'] < new Date().getTime() ||
-                excludedPokemon.indexOf(map_data.pokemons[key]['pokemon_id']) >= 0) {
-            map_data.pokemons[key].marker.setMap(null);
-            delete map_data.pokemons[key];
+        if (mapData.pokemons[key]['disappear_time'] < new Date().getTime() ||
+                excludedPokemon.indexOf(mapData.pokemons[key]['pokemon_id']) >= 0) {
+            mapData.pokemons[key].marker.setMap(null);
+            delete mapData.pokemons[key];
         }
     });
 
-    $.each(map_data.lure_pokemons, function(key, value) {
+    $.each(mapData.lure_pokemons, function(key, value) {
 
-        if (map_data.lure_pokemons[key]['lure_expiration'] < new Date().getTime() ||
-                excludedPokemon.indexOf(map_data.lure_pokemons[key]['pokemon_id']) >= 0) {
-            map_data.lure_pokemons[key].marker.setMap(null);
-            delete map_data.lure_pokemons[key];
+        if (mapData.lure_pokemons[key]['lure_expiration'] < new Date().getTime() ||
+                excludedPokemon.indexOf(mapData.lure_pokemons[key]['pokemon_id']) >= 0) {
+            mapData.lure_pokemons[key].marker.setMap(null);
+            delete mapData.lure_pokemons[key];
         }
     });
 };
@@ -712,12 +711,12 @@ function processPokemons(i, item) {
     if (!Store.get('showPokemon')) {
         return false; // in case the checkbox was unchecked in the meantime.
     }
-    if (!(item.id in map_data.pokemons) &&
+    if (!(item.id in mapData.pokemons) &&
         excludedPokemon.indexOf(item.pokemon_id) < 0) {
         // add marker to map and item to dict
         if (item.marker) item.marker.setMap(null);
         item.marker = setupPokemonMarker(item);
-        map_data.pokemons[item.id] = item;
+        mapData.pokemons[item.id] = item;
     }
 }
 
@@ -725,18 +724,18 @@ function processPokestops(i, item) {
     if (!Store.get('showPokestops')) {
         return false;
     }
-    if (map_data.pokestops[item.id] == null) { // add marker to map and item to dict
+    if (mapData.pokestops[item.id] == null) { // add marker to map and item to dict
         // add marker to map and item to dict
         if (item.marker) item.marker.setMap(null);
         item.marker = setupPokestopMarker(item);
-        map_data.pokestops[item.id] = item;
+        mapData.pokestops[item.id] = item;
     }
     else {
-        item2 = map_data.pokestops[item.id];
+        item2 = mapData.pokestops[item.id];
         if (!!item.lure_expiration != !!item2.lure_expiration || item.active_pokemon_id != item2.active_pokemon_id) {
             it2m.marker.setMap(null);
             item.marker = setupPokestopMarker(item);
-            map_data.pokestops[item.id] = item;
+            mapData.pokestops[item.id] = item;
         }
     }
 }
@@ -759,19 +758,19 @@ function processLuredPokemon(i, item) {
         return;
     }
 
-    if (map_data.lure_pokemons[item2.pokestop_id] == null && item2.lure_expiration && !item2.hidden) {
+    if (mapData.lure_pokemons[item2.pokestop_id] == null && item2.lure_expiration && !item2.hidden) {
         //if (item.marker) item.marker.setMap(null);
         item2.marker = setupPokemonMarker(item2);
-        map_data.lure_pokemons[item2.pokestop_id] = item2;
+        mapData.lure_pokemons[item2.pokestop_id] = item2;
 
     }
-    if (map_data.lure_pokemons[item.pokestop_id] != null && item2.lure_expiration && item2.active_pokemon_id != map_data.lure_pokemons[item2.pokestop_id].active_pokemon_id) {
+    if (mapData.lure_pokemons[item.pokestop_id] != null && item2.lure_expiration && item2.active_pokemon_id != mapData.lure_pokemons[item2.pokestop_id].active_pokemon_id) {
         //if (item.marker) item.marker.setMap(null);
-        map_data.lure_pokemons[item2.pokestop_id].marker.setMap(null);
+        mapData.lure_pokemons[item2.pokestop_id].marker.setMap(null);
 
         if(!item2.hidden) {
             item2.marker = setupPokemonMarker(item2);
-            map_data.lure_pokemons[item2.pokestop_id] = item2;
+            mapData.lure_pokemons[item2.pokestop_id] = item2;
         }
 
     }
@@ -783,14 +782,14 @@ function processGyms(i, item) {
         return false; // in case the checkbox was unchecked in the meantime.
     }
 
-    if (item.id in map_data.gyms) {
+    if (item.id in mapData.gyms) {
         // if team has changed, create new marker (new icon)
-        if (map_data.gyms[item.id].team_id != item.team_id) {
-            map_data.gyms[item.id].marker.setMap(null);
-            map_data.gyms[item.id].marker = setupGymMarker(item);
+        if (mapData.gyms[item.id].team_id != item.team_id) {
+            mapData.gyms[item.id].marker.setMap(null);
+            mapData.gyms[item.id].marker = setupGymMarker(item);
         } else { // if it hasn't changed generate new label only (in case prestige has changed)
-            map_data.gyms[item.id].marker.infoWindow = new google.maps.InfoWindow({
-                content: gymLabel(gym_types[item.team_id], item.team_id, item.gym_points, item.latitude, item.longitude),
+            mapData.gyms[item.id].marker.infoWindow = new google.maps.InfoWindow({
+                content: gymLabel(gymTypes[item.team_id], item.team_id, item.gym_points, item.latitude, item.longitude),
                 disableAutoPan: true
             });
         }
@@ -798,24 +797,24 @@ function processGyms(i, item) {
     else { // add marker to map and item to dict
         if (item.marker) item.marker.setMap(null);
         item.marker = setupGymMarker(item);
-        map_data.gyms[item.id] = item;
+        mapData.gyms[item.id] = item;
     }
 
 }
 
 function updateMap() {
     loadRawData().done(function (result) {
-        map_data.radius = result.searchRadius;
+        mapData.radius = result.searchRadius;
         setupRadiusMarker();
 
         $.each(result.pokemons, processPokemons);
         $.each(result.pokestops, processPokestops);
         $.each(result.pokestops, processLuredPokemon);
         $.each(result.gyms, processGyms);
-        showInBoundsMarkers(map_data.pokemons);
-        showInBoundsMarkers(map_data.lure_pokemons);
-        showInBoundsMarkers(map_data.gyms);
-        showInBoundsMarkers(map_data.pokestops);
+        showInBoundsMarkers(mapData.pokemons);
+        showInBoundsMarkers(mapData.lure_pokemons);
+        showInBoundsMarkers(mapData.gyms);
+        showInBoundsMarkers(mapData.pokestops);
         clearStaleMarkers();
     });
 };
@@ -992,10 +991,10 @@ function centerMap(lat, lng, zoom) {
 }
 
 function updateHeatmapOverlay() {
-    var heatmapPokemonId = Store.get('remember_heatmap_pokemon');
+    var heatmapPokemonId = Store.get('rememberHeatmapPokemon');
     if (heatmapPokemonId == 0) return;
 
-    $selectHeatmap = $("#heatmap-pokemon");
+    var $selectHeatmap = $("#heatmap-pokemon");
 
     $.ajax({
         url: "points",
@@ -1045,9 +1044,9 @@ $(function () {
         return $state;
     };
 
-    $selectExclude = $("#exclude-pokemon");
-    $selectNotify  = $("#notify-pokemon");
-    $selectHeatmap = $("#heatmap-pokemon");
+    var $selectExclude = $("#exclude-pokemon");
+    var $selectNotify  = $("#notify-pokemon");
+    var $selectHeatmap = $("#heatmap-pokemon");
     const numberOfPokemon = 151;
 
     // Load pokemon names and populate lists
@@ -1083,24 +1082,21 @@ $(function () {
 
         // setup list change behavior now that we have the list to work from
         $selectExclude.on("change", function(e) {
-            excludedPokemon = $selectExclude.val().map(Number);
-            Store.set('remember_select_exclude', excludedPokemon);
+            Store.set('rememberSelectExclude', $(this).val().map(Number));
             clearStaleMarkers();
         });
         $selectNotify.on("change", function(e) {
-            notifiedPokemon = $selectNotify.val().map(Number);
-            Store.set('remember_select_notify', notifiedPokemon);
+            Store.set('rememberSelectNotift', $(this).val().map(Number));
         });
         $selectHeatmap.on("change", function(e) {
-            heatmapPokemon = Number($(this).val());
-            Store.set('remember_heatmap_pokemon', heatmapPokemon);
+            Store.set('rememberHeatmapPokemon', Number($(this).val()));
             updateHeatmapOverlay();
         })
 
         // recall saved lists
-        $selectExclude.val(Store.get('remember_select_exclude')).trigger("change");
-        $selectNotify.val(Store.get('remember_select_notify')).trigger("change");
-        $selectHeatmap.val(Store.get('remember_heatmap_pokemon')).trigger("change");
+        $selectExclude.val(Store.get('rememberSelectExclude')).trigger("change");
+        $selectNotify.val(Store.get('rememberSelectNotift')).trigger("change");
+        $selectHeatmap.val(Store.get('rememberHeatmapPokemon')).trigger("change");
     });
 
     // run interval timers to regularly update map and timediffs
@@ -1143,9 +1139,9 @@ $(function () {
     }
 
     // Setup UI element interactions
-    $('#gyms-switch').change(buildSwitchChangeListener(map_data, "gyms", "showGyms"));
-    $('#pokemon-switch').change(buildSwitchChangeListener(map_data, "pokemons", "showPokemon"));
-    $('#pokestops-switch').change(buildSwitchChangeListener(map_data, "pokestops", "showPokestops"));
+    $('#gyms-switch').change(buildSwitchChangeListener(mapData, "gyms", "showGyms"));
+    $('#pokemon-switch').change(buildSwitchChangeListener(mapData, "pokemons", "showPokemon"));
+    $('#pokestops-switch').change(buildSwitchChangeListener(mapData, "pokestops", "showPokestops"));
     $('#radius-switch').change(function() {
         Store.set("showRadius", this.checked);
         setupRadiusMarker();
@@ -1157,14 +1153,14 @@ $(function () {
 
     $('#pokemon-icons').change(function() {
         Store.set('pokemonIcons', this.value);
-        redrawPokemon(map_data.pokemons);
-        redrawPokemon(map_data.lure_pokemons);
+        redrawPokemon(mapData.pokemons);
+        redrawPokemon(mapData.lure_pokemons);
     });
 
     $('#pokemon-icon-size').change(function() {
         Store.set('iconSizeModifier', this.value);
-        redrawPokemon(map_data.pokemons);
-        redrawPokemon(map_data.lure_pokemons);
+        redrawPokemon(mapData.pokemons);
+        redrawPokemon(mapData.lure_pokemons);
     });
 
     $('#geoloc-switch').change(function() {

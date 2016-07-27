@@ -1,5 +1,4 @@
 module.exports = function(grunt) {
-
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
@@ -22,13 +21,25 @@ module.exports = function(grunt) {
         }
       }
     },
+    babel: {
+      options: {
+        sourceMap: true,
+        presets: ['es2015']
+      },
+      dist: {
+        files: {
+          'static/dist/js/app.js': 'static/js/app.js',
+          'static/dist/js/map.js': 'static/js/map.js'
+        }
+      }
+    },
     uglify: {
       options: {
-        banner: '/*\n <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> \n*/\n'
+        banner: '/*\n <%= pkg.name %> <%= grunt.template.today("dd/mm/yyyy HH:MM") %> \n*/\n'
       },
       build: {
         files: {
-          'static/dist/js/app.min.js': 'static/js/app.js'
+          'static/dist/js/main.min.js': ['static/dist/js/app.js', 'static/dist/js/map.js']
         }
       }
     },
@@ -44,7 +55,7 @@ module.exports = function(grunt) {
   		js: {
   			files: ['**/*.js', '!node_modules/**/*.js', '!static/dist/**/*.js'],
   			options: { livereload: true },
-        tasks: ['uglify']
+        tasks: ['babel', 'uglify']
   		},
   		css: {
   			files: '**/*.scss',
@@ -54,7 +65,7 @@ module.exports = function(grunt) {
     },
     cssmin: {
       options: {
-        banner: '/*\n <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> \n*/\n'
+        banner: '/*\n <%= pkg.name %> <%= grunt.template.today("dd/mm/yyyy HH:MM") %> \n*/\n'
       },
       build: {
         files: {
@@ -74,7 +85,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-usemin');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-html-validation');
+  grunt.loadNpmTasks('grunt-babel');
 
-  grunt.registerTask('default', ['jshint', 'sass', 'cssmin', 'uglify', 'watch']);
-
+  grunt.registerTask('build', ['sass', 'cssmin', 'jshint', 'babel', 'uglify']);
+  grunt.registerTask('default', ['build', 'watch']);
 };

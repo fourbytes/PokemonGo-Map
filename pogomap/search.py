@@ -6,10 +6,8 @@ import time
 import math
 import collections
 
-import rethinkdb as r
 from pgoapi import PGoApi
 from pgoapi.utilities import f2i
-from sys import maxsize
 
 from geographiclib.geodesic import Geodesic
 
@@ -23,9 +21,6 @@ queue = collections.deque()
 consecutive_map_fails = 0
 scan_start_time = 0
 min_time_per_scan = 3 * 60
-
-#111111m is approx 1 degree Lat, which is close enough for this
-meters_per_degree = 111111
 
 def set_cover():
     lat = config['ORIGINAL_LATITUDE']

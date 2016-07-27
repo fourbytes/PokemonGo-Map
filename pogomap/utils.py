@@ -5,20 +5,14 @@ import sys
 import getpass
 import configargparse
 import re
-import uuid
 import os
 import json
-from datetime import datetime, timedelta
 from geopy.geocoders import GoogleV3
 from s2sphere import CellId, LatLng
-from google.protobuf.internal import encoder
-import configparser
-import platform
 import logging
 import shutil
 
 from . import config
-from .exceptions import APIKeyException
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(module)11s] [%(levelname)7s] %(message)s')
 log = logging.getLogger(__name__)
