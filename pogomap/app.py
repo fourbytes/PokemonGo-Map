@@ -65,12 +65,12 @@ class Pogom(Flask):
     def raw_data(self):
         d = {}
         try:
-            swLat = float(request.args.get('swLat'))
-            swLng = float(request.args.get('swLng'))
-            neLat = float(request.args.get('neLat'))
-            neLng = float(request.args.get('neLng'))
+            swLat = max(min(float(request.args.get('swLat')), 90.0), -90.0)
+            swLng = max(min(float(request.args.get('swLng')), 180.0), -180.0)
+            neLat = max(min(float(request.args.get('neLat')), 90.0), -90.0)
+            neLng = max(min(float(request.args.get('neLng')), 180.0), -180.0)
         except ValueError:
-            swLat, swLng, neLat, neLng = -180.0, -180.0, 180.0, 180.0
+            swLat, swLng, neLat, neLng = -90.0, -180.0, 90.0, 180.0
 
         if request.args.get('pokemon', 'true') == 'true':
             if request.args.get('ids'):
@@ -95,7 +95,7 @@ class Pogom(Flask):
                              .filter({'pokemon_id': pokemon_id}) \
                              .order_by(r.desc('disappear_time')) \
                              .limit(1000) \
-                             .map(lambda p: (p['latitude'], p['longitude'], p['disappear_time'])).run()
+                             .map(lambda p: (p['location'].to_geojson()['coordinates'][1], p['location'].to_geojson()['coordinates'][0])).run()
         res = list(res)
 
         return jsonify({'count': len(res), 'points': res})
@@ -127,8 +127,8 @@ class Pogom(Flask):
             return 'bad parameters', 400
         elif config.get('NEXT_LOCATION', {}).get('lat') != lat and config.get('NEXT_LOCATION', {}).get('lon') != lon:
             config['ORIGINAL_LATITUDE'], config['ORIGINAL_LONGITUDE'] = lat, lon
+            set_cover()
             config['CHANGE'] = True
-            log.info('Changing location: %s,%s' % (lat, lon))
             return 'ok', 200
         else:
             return 'ok', 200

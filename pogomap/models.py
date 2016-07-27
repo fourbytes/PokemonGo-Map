@@ -42,11 +42,19 @@ def create_tables():
             r.table_create(table).run()
             log.info('Created table "{}"'.format(table))
 
-    if 'disappear_time' not in r.table('pokemon').index_list().run():
-        # Create index for disappear time, this _should_ improve performance
-        # when filtering and sorting by this field.
-        r.table('pokemon').index_create('disappear_time').run()
-        log.info('Created secondary index "disappear_time" on table "pokemon"')
+    for index, table in [('disappear_time', 'pokemon')]:
+        if index not in r.table(table).index_list().run():
+            # Create index for some fields, this _should_ improve performance
+            # when filtering and sorting by this field.
+            r.table(table).index_create(index).run()
+            log.info('Created secondary index "{}" on table "{}"'.format(index, table))
+
+    if 'location' not in r.table('pokemon').index_list().run():
+        r.table('pokemon').index_create('location', geo=True).run()
+        log.info('Created geo index on table {}.'.format('pokemon'))
+        r.table('pokemon').update(lambda p: {'location': r.point(p['longitude'], p['latitude'])}).run()
+        r.table('pokemon').replace(r.row.without('longitude').without('latitude')).run()
+        log.info('Updated existing pokemon locations.')
 
 
 def utc_localize(dt):
@@ -59,37 +67,32 @@ def utc_localize(dt):
 def process_pokemon_dict(p):
     # We don't need this stored in the db so we'll just get it as we retrieve it.
     p['pokemon_name'] = get_pokemon_name(p['pokemon_id']).capitalize()
-
+    p['longitude'], p['latitude'] = p['location']['coordinates']
+    del p['location']
     return p
 
-def in_bounds(swLat, swLng, neLat, neLng):
-    return lambda row: ((row['latitude'] >= swLat) &
-                        (row['longitude'] >= swLng) &
-                        (row['latitude'] <= neLat) &
-                        (row['longitude'] <= neLng))
+def get_bounds(swLat, swLng, neLat, neLng):
+    return r.polygon([swLng, swLat],
+                     [neLng, swLat],
+                     [neLng, neLat],
+                     [swLng, neLat])
 
 def get_active_pokemon(swLat, swLng, neLat, neLng):
     return map(process_pokemon_dict, r.table('pokemon') \
-                                      .filter(in_bounds(swLat, swLng, neLat, neLng)) \
-                                      .filter(r.row['disappear_time'] > utc_localize(datetime.utcnow())).run())
+                                      .filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))) \
+                                      .filter(r.row['disappear_time'] > r.now()).run())
 
 def get_active_pokemon_by_id(pid):
     return map(process_pokemon_dict, r.table('pokemon') \
-                                      .filter(r.row['disappear_time'] > utc_localize(datetime.utcnow()) &
+                                      .filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))) \
+                                      .filter(r.row['disappear_time'] > r.now() &
                                               r.row['pokemon_id'] == pid).run())
 
 def get_pokestops(swLat, swLng, neLat, neLng):
-    return r.table('pokestops').filter(in_bounds(swLat, swLng, neLat, neLng)).run()
+    return r.table('pokestops').filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))).run()
 
 def get_gyms(swLat, swLng, neLat, neLng):
-    return r.table('gyms').filter(in_bounds(swLat, swLng, neLat, neLng)).run()
-
-def get_recently_scanned(swLat, swLng, neLat, neLng):
-    min_dt = utc_localize(datetime.utcnow() - timedelta(minutes=15))
-
-    return r.table('scanned') \
-            .filter(in_bounds(swLat, swLng, neLat, neLng)) \
-            .filter(lambda scan: scan['last_modified'] >= min_dt).run()
+    return r.table('gyms').filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))).run()
 
 def parse_map(map_dict):
     pokemon_list = []
@@ -102,17 +105,16 @@ def parse_map(map_dict):
             if p['encounter_id'] in pokemon_list:
                 continue  # prevent unnecessary parsing
 
-            dt = datetime.utcfromtimestamp(
+            disappear_time = utc_localize(datetime.utcfromtimestamp(
                 (p['last_modified_timestamp_ms'] +
-                 p['time_till_hidden_ms']) / 1000.0)
+                 p['time_till_hidden_ms']) / 1000.0))
 
             pokemon_list.append({
                 'id': p['encounter_id'],
                 'spawnpoint_id': p['spawn_point_id'],
                 'pokemon_id': p['pokemon_data']['pokemon_id'],
-                'latitude': p['latitude'],
-                'longitude': p['longitude'],
-                'disappear_time': utc_localize(dt)
+                'location': r.point(p['longitude'], p['latitude']),
+                'disappear_time': disappear_time
             })
 
         for p in cell.get('catchable_pokemons', []):
@@ -121,16 +123,16 @@ def parse_map(map_dict):
 
             log.critical("found catchable pokemon not in wild: {}".format(p))
 
-            dt = datetime.utcfromtimestamp(
-                (p['last_modified_timestamp_ms'] +
-                 p['time_till_hidden_ms']) / 1000.0)
+            disappear_time = utc_localize(datetime.utcfromtimestamp(
+                 (p['last_modified_timestamp_ms'] +
+                  p['time_till_hidden_ms']) / 1000.0))
+
             pokemon_list.append({
                 'id': p['encounter_id'],
                 'spawnpoint_id': p['spawnpoint_id'],
                 'pokemon_id': p['pokemon_data']['pokemon_id'],
-                'latitude': p['latitude'],
-                'longitude': p['longitude'],
-                'disappear_time': utc_localize(dt)
+                'location': r.point(p['longitude'], p['latitude']),
+                'disappear_time': disappear_time
             })
 
         for f in cell.get('forts', []):
@@ -139,33 +141,34 @@ def parse_map(map_dict):
 
             if f.get('type') == 1:  # Pokestops
                 if 'lure_info' in f:
-                    lure_expiration = datetime.utcfromtimestamp(
-                            f['lure_info']['lure_expires_timestamp_ms'] / 1000.0)
+                    lure_expiration = utc_localize(datetime.utcfromtimestamp(
+                            f['lure_info']['lure_expires_timestamp_ms'] / 1000.0))
                     active_pokemon_id = f['lure_info']['active_pokemon_id']
                 else:
                     lure_expiration, active_pokemon_id = None, None
 
+                last_modified = utc_localize(datetime.utcfromtimestamp(f['last_modified_timestamp_ms'] / 1000.0))
+
                 pokestops.append({
                     'id': f['id'],
                     'enabled': f['enabled'],
-                    'latitude': f['latitude'],
-                    'longitude': f['longitude'],
-                    'last_modified': utc_localize(datetime.utcfromtimestamp(f['last_modified_timestamp_ms'] / 1000.0)),
-                    'lure_expiration': utc_localize(lure_expiration),
+                    'location': r.point(f['longitude'], f['latitude']),
+                    'last_modified': last_modified,
+                    'lure_expiration': lure_expiration,
                     'active_pokemon_id': active_pokemon_id
                 })
 
             else:
+                last_modified = utc_localize(datetime.utcfromtimestamp(f['last_modified_timestamp_ms'] / 1000.0))
+
                 gyms.append({
                     'id': f['id'],
                     'team_id': f.get('owned_by_team', 0),
                     'guard_pokemon_id': f.get('guard_pokemon_id', 0),
                     'gym_points': f.get('gym_points', 0),
                     'enabled': f['enabled'],
-                    'latitude': f['latitude'],
-                    'longitude': f['longitude'],
-                    'last_modified': utc_localize(datetime.utcfromtimestamp(
-                        f['last_modified_timestamp_ms'] / 1000.0)),
+                    'location': r.point(f['longitude'], f['latitude']),
+                    'last_modified': last_modified,
                 })
 
     if pokemon_list and config['parse_pokemon']:

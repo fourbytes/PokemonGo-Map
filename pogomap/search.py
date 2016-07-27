@@ -198,7 +198,7 @@ def search(args):
         api.call_async(callback)
 
         if config['CHANGE']:
-            log.info("Changing scan location")
+            log.info("Updated scan location. Restarting search.")
             config['CHANGE'] = False
             queue.clear()
             queue.extend(config['COVER'])
@@ -220,7 +220,10 @@ def throttle():
     sleep_time = max(min_time_per_scan - (time.time() - scan_start_time), 0)
     log.info("Scan finished. Sleeping {:.2f} seconds before continuing.".format(sleep_time))
     config['LAST_SUCCESSFUL_REQUEST'] = -1
-    time.sleep(sleep_time)
+
+    while sleep_time > 0 and not config['CHANGE']:
+        time.sleep(1)
+        sleep_time -= 1
 
 
 def search_loop(args):

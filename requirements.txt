@@ -12,6 +12,6 @@ flask-cors
 flask-compress
 pytz
 pycurl
-git+https://github.com/fourbytes/pgoapi.git
-# -e ../pgoapi
+# git+https://github.com/fourbytes/pgoapi.git
+-e ../pgoapi
 geographiclib

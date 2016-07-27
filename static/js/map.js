@@ -30,10 +30,10 @@ var pGoStyleNoLabels=[{"featureType":"landscape.man_made","elementType":"geometr
 var selectedStyle = 'light';
 
 var mapData = {
-    pokemons: {},
+    pokemon: {},
     gyms: {},
     pokestops: {},
-    lure_pokemons: {},
+    luredPokemon: {},
     radius: 0
 };
 var gymTypes = ["Uncontested", "Mystic", "Valor", "Instinct"];
@@ -211,8 +211,8 @@ function notifyAboutPokemon(id) {
 }
 
 function removePokemonMarker(id) {
-    mapData.pokemons[encounter_id].hidden = true;
-    mapData.pokemons[id].marker.setMap(null);
+    mapData.pokemon[encounter_id].hidden = true;
+    mapData.pokemon[id].marker.setMap(null);
 }
 
 function initMap() {
@@ -279,8 +279,8 @@ function initMap() {
     });
 
     google.maps.event.addListener(map, 'zoom_changed', function() {
-        redrawPokemon(mapData.pokemons);
-        redrawPokemon(mapData.lure_pokemons);
+        redrawPokemon(mapData.pokemon);
+        redrawPokemon(mapData.luredPokemon);
     });
 };
 
@@ -624,21 +624,21 @@ function addListeners(marker) {
 };
 
 function clearStaleMarkers() {
-    $.each(mapData.pokemons, function(key, value) {
+    $.each(mapData.pokemon, function(key, value) {
 
-        if (mapData.pokemons[key]['disappear_time'] < new Date().getTime() ||
-                excludedPokemon.indexOf(mapData.pokemons[key]['pokemon_id']) >= 0) {
-            mapData.pokemons[key].marker.setMap(null);
-            delete mapData.pokemons[key];
+        if (mapData.pokemon[key]['disappear_time'] < new Date().getTime() ||
+                excludedPokemon.indexOf(mapData.pokemon[key]['pokemon_id']) >= 0) {
+            mapData.pokemon[key].marker.setMap(null);
+            delete mapData.pokemon[key];
         }
     });
 
-    $.each(mapData.lure_pokemons, function(key, value) {
+    $.each(mapData.luredPokemon, function(key, value) {
 
-        if (mapData.lure_pokemons[key]['lure_expiration'] < new Date().getTime() ||
-                excludedPokemon.indexOf(mapData.lure_pokemons[key]['pokemon_id']) >= 0) {
-            mapData.lure_pokemons[key].marker.setMap(null);
-            delete mapData.lure_pokemons[key];
+        if (mapData.luredPokemon[key]['lure_expiration'] < new Date().getTime() ||
+                excludedPokemon.indexOf(mapData.luredPokemon[key]['pokemon_id']) >= 0) {
+            mapData.luredPokemon[key].marker.setMap(null);
+            delete mapData.luredPokemon[key];
         }
     });
 };
@@ -707,16 +707,16 @@ function loadRawData() {
     })
 }
 
-function processPokemons(i, item) {
+function processPokemon(i, item) {
     if (!Store.get('showPokemon')) {
         return false; // in case the checkbox was unchecked in the meantime.
     }
-    if (!(item.id in mapData.pokemons) &&
+    if (!(item.id in mapData.pokemon) &&
         excludedPokemon.indexOf(item.pokemon_id) < 0) {
         // add marker to map and item to dict
         if (item.marker) item.marker.setMap(null);
         item.marker = setupPokemonMarker(item);
-        mapData.pokemons[item.id] = item;
+        mapData.pokemon[item.id] = item;
     }
 }
 
@@ -731,7 +731,7 @@ function processPokestops(i, item) {
         mapData.pokestops[item.id] = item;
     }
     else {
-        item2 = mapData.pokestops[item.id];
+        var item2 = mapData.pokestops[item.id];
         if (!!item.lure_expiration != !!item2.lure_expiration || item.active_pokemon_id != item2.active_pokemon_id) {
             it2m.marker.setMap(null);
             item.marker = setupPokestopMarker(item);
@@ -758,19 +758,19 @@ function processLuredPokemon(i, item) {
         return;
     }
 
-    if (mapData.lure_pokemons[item2.pokestop_id] == null && item2.lure_expiration && !item2.hidden) {
+    if (mapData.luredPokemon[item2.pokestop_id] == null && item2.lure_expiration && !item2.hidden) {
         //if (item.marker) item.marker.setMap(null);
         item2.marker = setupPokemonMarker(item2);
-        mapData.lure_pokemons[item2.pokestop_id] = item2;
+        mapData.luredPokemon[item2.pokestop_id] = item2;
 
     }
-    if (mapData.lure_pokemons[item.pokestop_id] != null && item2.lure_expiration && item2.active_pokemon_id != mapData.lure_pokemons[item2.pokestop_id].active_pokemon_id) {
+    if (mapData.luredPokemon[item.pokestop_id] != null && item2.lure_expiration && item2.active_pokemon_id != mapData.luredPokemon[item2.pokestop_id].active_pokemon_id) {
         //if (item.marker) item.marker.setMap(null);
-        mapData.lure_pokemons[item2.pokestop_id].marker.setMap(null);
+        mapData.luredPokemon[item2.pokestop_id].marker.setMap(null);
 
         if(!item2.hidden) {
             item2.marker = setupPokemonMarker(item2);
-            mapData.lure_pokemons[item2.pokestop_id] = item2;
+            mapData.luredPokemon[item2.pokestop_id] = item2;
         }
 
     }
@@ -807,12 +807,12 @@ function updateMap() {
         mapData.radius = result.searchRadius;
         setupRadiusMarker();
 
-        $.each(result.pokemons, processPokemons);
+        $.each(result.pokemon, processPokemon);
         $.each(result.pokestops, processPokestops);
         $.each(result.pokestops, processLuredPokemon);
         $.each(result.gyms, processGyms);
-        showInBoundsMarkers(mapData.pokemons);
-        showInBoundsMarkers(mapData.lure_pokemons);
+        showInBoundsMarkers(mapData.pokemon);
+        showInBoundsMarkers(mapData.luredPokemon);
         showInBoundsMarkers(mapData.gyms);
         showInBoundsMarkers(mapData.pokestops);
         clearStaleMarkers();
@@ -843,6 +843,7 @@ var updateLabelDiffTime = function() {
         var minutes = Math.floor((difference - (hours * 36e5)) / 6e4);
         var seconds = Math.floor((difference - (hours * 36e5) - (minutes * 6e4)) / 1e3);
 
+        var timestring;
         if (disappearsAt < now) {
             timestring = "(expired)";
         } else {
@@ -1106,8 +1107,8 @@ $(function () {
       if(navigator.geolocation && Store.get('geoLocate')) {
         navigator.geolocation.getCurrentPosition(function (position){
           var baseURL = location.protocol + "//" + location.hostname + (location.port ? ":"+location.port: "");
-          lat = position.coords.latitude;
-          lon = position.coords.longitude;
+          var lat = position.coords.latitude;
+          var lon = position.coords.longitude;
 
           //the search function makes any small movements cause a loop. Need to increase resolution
           if(getPointDistance(marker.getPosition(), (new google.maps.LatLng(lat, lon))) > 40) //changed to 40 from PR notes, less jitter.
@@ -1140,7 +1141,7 @@ $(function () {
 
     // Setup UI element interactions
     $('#gyms-switch').change(buildSwitchChangeListener(mapData, "gyms", "showGyms"));
-    $('#pokemon-switch').change(buildSwitchChangeListener(mapData, "pokemons", "showPokemon"));
+    $('#pokemon-switch').change(buildSwitchChangeListener(mapData, "pokemon", "showPokemon"));
     $('#pokestops-switch').change(buildSwitchChangeListener(mapData, "pokestops", "showPokestops"));
     $('#radius-switch').change(function() {
         Store.set("showRadius", this.checked);
@@ -1153,14 +1154,14 @@ $(function () {
 
     $('#pokemon-icons').change(function() {
         Store.set('pokemonIcons', this.value);
-        redrawPokemon(mapData.pokemons);
-        redrawPokemon(mapData.lure_pokemons);
+        redrawPokemon(mapData.pokemon);
+        redrawPokemon(mapData.luredPokemon);
     });
 
     $('#pokemon-icon-size').change(function() {
         Store.set('iconSizeModifier', this.value);
-        redrawPokemon(mapData.pokemons);
-        redrawPokemon(mapData.lure_pokemons);
+        redrawPokemon(mapData.pokemon);
+        redrawPokemon(mapData.luredPokemon);
     });
 
     $('#geoloc-switch').change(function() {
