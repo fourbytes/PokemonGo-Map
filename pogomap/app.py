@@ -30,7 +30,7 @@ class Pogom(Flask):
         self.route("/loc", methods=['GET'])(self.loc)
         self.route("/next_loc", methods=['POST'])(self.next_loc)
         self.route("/mobile", methods=['GET'])(self.list_pokemon)
-        self.route('/points', methods=['GET'])(self.retrive_points)
+        self.route('/points', methods=['GET'])(self.retrieve_points)
 
         @self.before_request
         def before():
@@ -56,8 +56,7 @@ class Pogom(Flask):
                                lng=config['ORIGINAL_LONGITUDE'],
                                gmaps_key=config['GMAPS_KEY'],
                                lang=config['LOCALE'],
-                               is_fixed=display
-                               )
+                               is_fixed=display)
 
     def raw_data(self):
         d = {}
@@ -71,9 +70,9 @@ class Pogom(Flask):
 
         if request.args.get('pokemon', 'true') == 'true':
             if request.args.get('ids'):
-                d['pokemons'] = get_active_pokemon_by_id([int(sid) for sid in request.args.get('ids').split(',')])
+                d['pokemon'] = get_active_pokemon_by_id([int(sid) for sid in request.args.get('ids').split(',')])
             else:
-                d['pokemons'] = get_active_pokemon(swLat, swLng, neLat, neLng)
+                d['pokemon'] = get_active_pokemon(swLat, swLng, neLat, neLng)
 
         if request.args.get('pokestops', 'false') == 'true':
             d['pokestops'] = get_pokestops(swLat, swLng, neLat, neLng)
@@ -85,7 +84,7 @@ class Pogom(Flask):
 
         return jsonify(d)
 
-    def retrive_points(self):
+    def retrieve_points(self):
         pokemon_id = int(request.args.get('pokemon_id'))
 
         res = r.db('pogomap').table('pokemon') \
