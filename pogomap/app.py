@@ -19,6 +19,7 @@ from .models import get_active_pokemon_by_id
 from .models import get_gyms
 from .models import get_pokestops
 from .models import init_database
+from .models import set_cover
 
 log = logging.getLogger(__name__)
 compress = Compress()
