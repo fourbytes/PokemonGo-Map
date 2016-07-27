@@ -18,14 +18,13 @@ from pogomap.models import init_database, create_tables
 
 log = logging.getLogger(__name__)
 
-search_thread = Thread()
-
 def start_locator_thread(args):
     search_thread = Thread(target=search_loop, args=(args,))
     search_thread.daemon = True
     search_thread.name = 'search_thread'
     search_thread.start()
 
+    return search_thread
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(module)11s] [%(levelname)7s] %(message)s')
@@ -69,7 +68,7 @@ if __name__ == '__main__':
     config['LOCALE'] = args.locale
 
     if not args.only_server:
-        start_locator_thread(args)
+        search_thread = start_locator_thread(args)
 
     app = Pogom(__name__)
 

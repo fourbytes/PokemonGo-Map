@@ -12,12 +12,10 @@ db-user: admin
 
 # Search settings
 location: Redfern, NSW Australia
+radius: 1000
 #no-gyms
 #no-pokemon
 #no-pokestops
-num-threads: 2
-scan-delay: 1
-step-limit: 12
 
 # Misc
 gmaps-key:

@@ -136,56 +136,6 @@ def login(args, position):
 
     log.info('Login to Pokemon Go successful.')
 
-def create_search_threads(num) :
-    search_threads = []
-    for i in range(num):
-        t = Thread(target=search_thread, name='search_thread {}'.format(i), args=( search_queue,))
-        t.daemon = True
-        t.start()
-        search_threads.append(t)
-
-def search_thread(args):
-    # Setup DB connection
-    rdb = init_database()
-
-    queue = args
-    while True:
-        i, total_steps, step_location, step, lock = queue.get()
-        log.debug("Search queue depth is: " + str(queue.qsize()))
-        response_dict = {}
-        failed_consecutive = 0
-        while not response_dict:
-            response_dict = send_map_request(api, step_location)
-            if response_dict:
-                with lock:
-                    try:
-                        parse_map(response_dict, i, step, step_location)
-                    except KeyError:
-                        log.error('Scan step {:d} failed. Response dictionary key error.'.format(step))
-                        failed_consecutive += 1
-                        if(failed_consecutive >= config['REQ_MAX_FAILED']):
-                            log.error('Niantic servers under heavy load. Waiting before trying again')
-                            time.sleep(config['REQ_HEAVY_SLEEP'])
-                            failed_consecutive = 0
-                        response_dict = {}
-            else:
-                log.info('Map Download failed. Trying again.')
-                time.sleep(config['REQ_SLEEP'])
-
-        time.sleep(config['REQ_SLEEP'])
-
-    # Close DB connection
-    rdb.close()
-
-def process_search_threads(search_threads, curr_steps, total_steps):
-    for thread in search_threads:
-        thread.start()
-    for thread in search_threads:
-        curr_steps += 1
-        thread.join()
-        log.info('Completed {:5.2f}% of scan.'.format(float(curr_steps) / total_steps*100))
-    return curr_steps
-
 def callback(response_dict):
     rdb = init_database()
 
@@ -287,22 +237,3 @@ def search_loop(args):
         queue.extend(config['COVER'][::-1])
         search(args)
         config['COMPLETE_SCAN_TIME'] = time.time() - scan_start_time
-
-
-#def search_loop(args):
-#    i = 0
-#    try:
-#        while True:
-#            log.info("Map iteration: {}".format(i))
-#            search(args, i)
-#            log.info("Scanning complete.")
-#            if args.scan_delay > 1:
-#                log.info('Waiting {:d} seconds before beginning new scan.'.format(args.scan_delay))
-#                time.sleep(args.scan_delay)
-#            i += 1
-
-    # This seems appropriate
-#    except Exception as e:
-#        log.info('{0.__class__.__name__}: {0} - waiting {1} sec(s) before restarting'.format(e, args.scan_delay))
-#        time.sleep(args.scan_delay)
-#        search_loop(args)
