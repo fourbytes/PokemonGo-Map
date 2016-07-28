@@ -16,6 +16,14 @@ docker run -d --name rethinkdb --restart=always -v "/srv/pokemap/rethinkdb:/data
 docker run -d --name pogomap --restart=always --link rethinkdb:rethinkdb -p 5000:5000 -v "/srv/pokemap/config/config.ini:/app/config/config.ini" fourbytes/pogomap
 ```
 
+To run it without docker on a Debian based OS, you'll need to do:
+
+```
+sudo apt update
+sudo apt install libssl-dev libcurl4-openssl-dev python-dev
+pip3 install -r requirements.txt
+```
+
 If use want to setup SSL, use nginx as a reverse proxy (follow a guide [like this](https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-web-server-and-reverse-proxy-for-apache-on-one-ubuntu-14-04-droplet)).
 
 
