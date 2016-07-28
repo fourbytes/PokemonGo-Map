@@ -1,4 +1,6 @@
-Flask
+flask
+flask-socketio
+eventlet
 Jinja2
 configargparse
 rethinkdb

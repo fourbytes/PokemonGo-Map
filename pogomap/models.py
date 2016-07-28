@@ -64,12 +64,17 @@ def utc_localize(dt):
     utc = pytz.timezone('UTC')
     return utc.localize(dt)
 
+def fix_coords(i):
+    i['longitude'], i['latitude'] = i['location']['coordinates']
+    del i['location']
+
+    return i
+
 def process_pokemon_dict(p):
     # We don't need this stored in the db so we'll just get it as we retrieve it.
     p['pokemon_name'] = get_pokemon_name(p['pokemon_id']).capitalize()
-    p['longitude'], p['latitude'] = p['location']['coordinates']
-    del p['location']
-    return p
+
+    return fix_coords(p)
 
 def get_bounds(swLat, swLng, neLat, neLng):
     return r.polygon([swLng, swLat],
@@ -89,10 +94,10 @@ def get_active_pokemon_by_id(pid):
                                               r.row['pokemon_id'] == pid).run())
 
 def get_pokestops(swLat, swLng, neLat, neLng):
-    return r.table('pokestops').filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))).run()
+    return map(fix_coords, r.table('pokestops').filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))).run())
 
 def get_gyms(swLat, swLng, neLat, neLng):
-    return r.table('gyms').filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))).run()
+    return map(fix_coords, r.table('gyms').filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))).run())
 
 def parse_map(map_dict):
     pokemon_list = []

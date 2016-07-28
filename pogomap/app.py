@@ -37,18 +37,18 @@ class Pogom(Flask):
         self.route("/mobile", methods=['GET'])(self.list_pokemon)
         self.route('/points', methods=['GET'])(self.retrieve_points)
 
-        @self.before_request
-        def before():
-            ctx = stack.top
-            if ctx is not None:
-                if not hasattr(ctx, 'rethinkdb'):
-                    ctx.rethinkdb = init_database()
-
-        @self.teardown_appcontext
-        def teardown(exception):
-            ctx = stack.top
-            if hasattr(ctx, 'rethinkdb'):
-                ctx.rethinkdb.close()
+        # @self.before_request
+        # def before():
+        #     ctx = stack.top
+        #     if ctx is not None:
+        #         if not hasattr(ctx, 'rethinkdb'):
+        #             ctx.rethinkdb = init_database()
+        #
+        # @self.teardown_appcontext
+        # def teardown(exception):
+        #     ctx = stack.top
+        #     if hasattr(ctx, 'rethinkdb'):
+        #         ctx.rethinkdb.close()
 
     def fullmap(self):
         args = get_args()

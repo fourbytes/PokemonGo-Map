@@ -6,8 +6,11 @@ import sys
 import logging
 import time
 
+from functools import partial
 from threading import Thread
 from flask_cors import CORS, cross_origin
+from eventlet import wsgi
+import eventlet
 
 from pogomap import config
 from pogomap.app import Pogom
@@ -31,6 +34,7 @@ if __name__ == '__main__':
 
     logging.getLogger("rethinkdb").setLevel(logging.INFO)
     logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("eventlet.wsgi").setLevel(logging.WARNING)
     logging.getLogger("pgoapi.pgoapi").setLevel(logging.WARNING)
     logging.getLogger("pgoapi.rpc_api").setLevel(logging.INFO)
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
@@ -70,12 +74,6 @@ if __name__ == '__main__':
     if not args.only_server:
         search_thread = start_locator_thread(args)
 
-    app = Pogom(__name__)
-
-    if args.cors:
-        CORS(app);
-
-    config['ROOT_PATH'] = app.root_path
     config['GMAPS_KEY'] = args.gmaps_key
 
     if args.no_server:
@@ -83,4 +81,18 @@ if __name__ == '__main__':
             time.sleep(1)
         search_thread.join()
     else:
-        app.run(threaded=True, debug=args.debug, host=args.host, port=args.port)
+        eventlet.monkey_patch()
+        log.info('Monkey patched for eventlet!')
+        # app.run(threaded=True, debug=args.debug, host=args.host, port=args.port)
+        app = Pogom(__name__)
+        config['ROOT_PATH'] = app.root_path
+
+        # Logging fix
+        class WSGILog(object):
+            def __init__(self):
+                self.log = logging.getLogger("eventlet.wsgi")
+
+            def write(self, string):
+                self.log.debug(string.rstrip("\n"))
+
+        wsgi.server(eventlet.listen((args.host, args.port)), app, log=WSGILog())

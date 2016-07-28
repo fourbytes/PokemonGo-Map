@@ -734,7 +734,7 @@ function processPokestops(i, item) {
     else {
         var item2 = mapData.pokestops[item.id];
         if (!!item.lure_expiration != !!item2.lure_expiration || item.active_pokemon_id != item2.active_pokemon_id) {
-            it2m.marker.setMap(null);
+            item2.marker.setMap(null);
             item.marker = setupPokestopMarker(item);
             mapData.pokestops[item.id] = item;
         }
