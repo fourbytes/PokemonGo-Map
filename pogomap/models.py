@@ -82,10 +82,11 @@ def get_bounds(swLat, swLng, neLat, neLng):
                      [neLng, neLat],
                      [swLng, neLat])
 
-def get_active_pokemon(swLat, swLng, neLat, neLng):
-    return map(process_pokemon_dict, r.table('pokemon') \
-                                      .filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))) \
-                                      .filter(r.row['disappear_time'] > r.now()).run())
+def get_active_pokemon(swLat=None, swLng=None, neLat=None, neLng=None):
+    query = r.table('pokemon').filter(r.row['disappear_time'] > r.now())
+    if None not in (swLat, swLng, neLat, neLng):
+        query = query.filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng)))
+    return map(process_pokemon_dict, query.run())
 
 def get_active_pokemon_by_id(pid):
     return map(process_pokemon_dict, r.table('pokemon') \
@@ -93,11 +94,17 @@ def get_active_pokemon_by_id(pid):
                                       .filter(r.row['disappear_time'] > r.now() &
                                               r.row['pokemon_id'] == pid).run())
 
-def get_pokestops(swLat, swLng, neLat, neLng):
-    return map(fix_coords, r.table('pokestops').filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))).run())
+def get_pokestops(swLat=None, swLng=None, neLat=None, neLng=None):
+    query = r.table('pokestops')
+    if None not in (swLat, swLng, neLat, neLng):
+        query = query.filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng)))
+    return map(fix_coords, query.run())
 
-def get_gyms(swLat, swLng, neLat, neLng):
-    return map(fix_coords, r.table('gyms').filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng))).run())
+def get_gyms(swLat=None, swLng=None, neLat=None, neLng=None):
+    query = r.table('gyms')
+    if None not in (swLat, swLng, neLat, neLng):
+        query = query.filter(r.row['location'].intersects(get_bounds(swLat, swLng, neLat, neLng)))
+    return map(fix_coords, query.run())
 
 def parse_map(map_dict):
     pokemon_list = []

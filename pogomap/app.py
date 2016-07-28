@@ -9,7 +9,7 @@ from flask import Flask, jsonify, render_template, request
 from flask import _app_ctx_stack as stack
 from flask.json import JSONEncoder
 from flask_compress import Compress
-from datetime import datetime
+from datetime import datetime, timezone
 from s2sphere import *
 
 from . import config
@@ -66,10 +66,10 @@ class Pogom(Flask):
     def raw_data(self):
         d = {}
         try:
-            swLat = max(min(float(request.args.get('swLat')), 90.0), -90.0)
-            swLng = max(min(float(request.args.get('swLng')), 180.0), -180.0)
-            neLat = max(min(float(request.args.get('neLat')), 90.0), -90.0)
-            neLng = max(min(float(request.args.get('neLng')), 180.0), -180.0)
+            swLat = max(min(request.args.get('swLat', type=float), 90.0), -90.0)
+            swLng = max(min(request.args.get('swLng', type=float), 180.0), -180.0)
+            neLat = max(min(request.args.get('neLat', type=float), 90.0), -90.0)
+            neLng = max(min(request.args.get('neLng', type=float), 180.0), -180.0)
         except ValueError:
             swLat, swLng, neLat, neLng = -90.0, -180.0, 90.0, 180.0
 
@@ -142,19 +142,21 @@ class Pogom(Flask):
         lon = request.args.get('lon', config['ORIGINAL_LONGITUDE'], type=float)
         origin_point = LatLng.from_degrees(lat, lon)
 
-        for pokemon in Pokemon.get_active(None, None, None, None):
+        for pokemon in get_active_pokemon():
             pokemon_point = LatLng.from_degrees(pokemon['latitude'], pokemon['longitude'])
             diff = pokemon_point - origin_point
             diff_lat = diff.lat().degrees
             diff_lng = diff.lng().degrees
             direction = (('N' if diff_lat >= 0 else 'S') if abs(diff_lat) > 1e-4 else '') + (
                 ('E' if diff_lng >= 0 else 'W') if abs(diff_lng) > 1e-4 else '')
+
+            pokemon['disappear_time'] = pokemon['disappear_time'].replace(tzinfo=None)
             entry = {
                 'id': pokemon['pokemon_id'],
                 'name': pokemon['pokemon_name'],
                 'card_dir': direction,
                 'distance': int(origin_point.get_distance(pokemon_point).radians * 6366468.241830914),
-                'time_to_disappear': '%d min %d sec' % (divmod((pokemon['disappear_time']-datetime.utcnow()).seconds, 60)),
+                'time_to_disappear': '%d min %d sec' % (divmod((pokemon['disappear_time'] - datetime.utcnow()).seconds, 60)),
                 'disappear_time': pokemon['disappear_time'],
                 'latitude': pokemon['latitude'],
                 'longitude': pokemon['longitude']
