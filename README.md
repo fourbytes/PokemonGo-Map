@@ -7,7 +7,7 @@ Forked from [AHAAAAAAA's original PokemonGo-Map](https://github.com/AHAAAAAAA/Po
 ![Map](https://raw.githubusercontent.com/fourbytes/pogomap/master/static/cover.png)
 
 
-## Running
+## Running It
 The simplest way to run this is to use docker.
 
 ```
