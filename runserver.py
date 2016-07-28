@@ -13,11 +13,11 @@ from eventlet import wsgi
 import eventlet
 
 from pogomap import config
-from pogomap.app import Pogom
+from pogomap.app import app, socketio
 
 from pogomap.utils import get_args
 from pogomap.search import search_loop, set_location, set_cover
-from pogomap.models import init_database, create_tables
+from pogomap.data import init_database, create_tables
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +37,6 @@ if __name__ == '__main__':
     logging.getLogger("eventlet.wsgi").setLevel(logging.WARNING)
     logging.getLogger("pgoapi.pgoapi").setLevel(logging.WARNING)
     logging.getLogger("pgoapi.rpc_api").setLevel(logging.INFO)
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
     args = get_args()
 
@@ -55,6 +54,7 @@ if __name__ == '__main__':
         logging.getLogger("requests").setLevel(logging.DEBUG)
         logging.getLogger("pgoapi").setLevel(logging.DEBUG)
         logging.getLogger("rpc_api").setLevel(logging.DEBUG)
+        logging.getLogger("eventlet.wsgi").setLevel(logging.INFO)
 
     init_database()
     create_tables()
@@ -84,15 +84,14 @@ if __name__ == '__main__':
         eventlet.monkey_patch()
         log.info('Monkey patched for eventlet!')
 
-        app = Pogom(__name__)
         config['ROOT_PATH'] = app.root_path
 
         # Logging fix
         class WSGILog(object):
             def __init__(self):
                 self.log = logging.getLogger("eventlet.wsgi")
-
             def write(self, string):
                 self.log.debug(string.rstrip("\n"))
 
-        wsgi.server(eventlet.listen((args.host, args.port)), app, log=WSGILog())
+        socketio.run(app, log=WSGILog(), debug=args.debug)
+        # wsgi.server(eventlet.listen((args.host, args.port)), app, log=WSGILog())

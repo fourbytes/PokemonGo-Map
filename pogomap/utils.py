@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 import sys
 import getpass
 import configargparse
@@ -11,6 +8,10 @@ from geopy.geocoders import GoogleV3
 from s2sphere import CellId, LatLng
 import logging
 import shutil
+from datetime import datetime
+import calendar
+
+from flask.json import JSONEncoder
 
 from . import config
 
@@ -114,3 +115,21 @@ def get_cellids(lat, lng, radius=10):
 
     # Return everything
     return sorted(walk)
+
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        try:
+            if isinstance(obj, datetime):
+                if obj.utcoffset() is not None:
+                    obj = obj - obj.utcoffset()
+                millis = int(
+                    calendar.timegm(obj.timetuple()) * 1000 +
+                    obj.microsecond / 1000
+                )
+                return millis
+            iterable = iter(obj)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        return JSONEncoder.default(self, obj)

@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 import logging
 import time
 import math
@@ -13,7 +10,7 @@ from geographiclib.geodesic import Geodesic
 
 from . import config
 from .utils import get_cellids, get_pos_by_name
-from .models import parse_map, init_database
+from .data import parse_map, init_database
 
 log = logging.getLogger(__name__)
 api = PGoApi()
