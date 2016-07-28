@@ -887,7 +887,10 @@ function centerMap(lat, lng, zoom) {
 
 function updateHeatmapOverlay() {
     var heatmapPokemonId = Store.get('rememberHeatmapPokemon');
-    if (heatmapPokemonId == 0) return;
+    if (heatmapPokemonId == 0) {
+        if (currentHeatmap) currentHeatmap.setMap(null);
+        return;
+    }
 
     $selectHeatmap = $("#heatmap-pokemon");
 
