@@ -1,6 +1,6 @@
 # PoGoMap ![Python 3](https://img.shields.io/badge/python-3-blue.svg)
 
-Live visualization of all the pokemon (with option to show gyms and pokestops) in your area. Runs on a Flask server displaying Google Maps with markers. Supports basic filtering, browser notifications and heatmaps.
+Live visualization of all the pokemon (with option to show gyms and pokestops) in your area. Runs on a Flask server displaying Google Maps with markers and is being built with efficiency and high performance in mind. Supports basic filtering, browser notifications and heatmaps.
 
 Forked from [AHAAAAAAA's original PokemonGo-Map](https://github.com/AHAAAAAAA/PokemonGo-Map).
 
